@@ -14,12 +14,14 @@ Output       Layers · Image
 
 ## What it does
 
-**Insert.** One seed per line. One avatar goes in on its own, several go in as
-a row with auto layout.
+**Insert.** The selection sets the count. Select six frames and Insert makes
+six avatars, one per layer, each seeded from that layer's own name. Select
+nothing and the seeds box sets the count instead, one avatar per line. One
+avatar goes in on its own; several go in as a row with auto layout.
 
-**Fill selection.** Select any shapes and every one of them gets an avatar. By
-default each layer is seeded from its own name, so a page of placeholders
-named after real people fills itself in one click.
+**Fill selection.** The same seeds, painted into the shapes you already have
+rather than into new ones. So a page of placeholders named after real people
+fills itself in one click, whatever geometry those placeholders are.
 
 **Brand colors.** Give it your palette and the seed still decides the layout,
 so every avatar stays unique and stays on brand.
@@ -85,6 +87,7 @@ file is a placeholder.
 | File | What |
 |---|---|
 | `src/plan.ts` | The recorder. Engine draw calls in, Figma-ready operations out. Pure, and tested in Node. |
+| `src/seeds.ts` | How many avatars one insert makes, and what seeds them. Pure, and tested in Node. |
 | `src/nodes.ts` | Operations in, Figma nodes out. |
 | `src/code.ts` | Main thread. Owns the document and nothing else. |
 | `src/ui/` | The panel. Owns the drawing, because only the iframe has a canvas. |
