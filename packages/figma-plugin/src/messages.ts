@@ -55,7 +55,6 @@ export interface Settings {
 	output: Output;
 	palette: string;
 	usePalette: boolean;
-	seedFromName: boolean;
 }
 
 export type UiMessage =

@@ -23,6 +23,10 @@ avatar goes in on its own; several go in as a row with auto layout.
 rather than into new ones. So a page of placeholders named after real people
 fills itself in one click, whatever geometry those placeholders are.
 
+A layer is always its own seed. There is no switch for it, because a seed that
+follows the canvas is the point: the same frame name gives the same avatar in
+every file, on every machine. Only an unnamed layer borrows a typed seed.
+
 **Brand colors.** Give it your palette and the seed still decides the layout,
 so every avatar stays unique and stays on brand.
 

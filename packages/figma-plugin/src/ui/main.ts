@@ -19,7 +19,7 @@ import type {
 	UiMessage,
 } from "../messages.ts";
 import { buildPlan } from "../plan.ts";
-import { planSeeds } from "../seeds.ts";
+import { planSeeds, seedForLayer } from "../seeds.ts";
 
 const DEFAULTS: Settings = {
 	seeds: "jane@example.com\nacme\noutpace",
@@ -31,7 +31,6 @@ const DEFAULTS: Settings = {
 	output: "layers",
 	palette: "",
 	usePalette: false,
-	seedFromName: true,
 };
 
 /**
@@ -63,7 +62,6 @@ const radiusInput = el<HTMLInputElement>("radius");
 const radiusValue = el<HTMLSpanElement>("radius-value");
 const paletteInput = el<HTMLInputElement>("palette");
 const usePaletteInput = el<HTMLInputElement>("use-palette");
-const seedFromNameInput = el<HTMLInputElement>("seed-from-name");
 const outputHint = el<HTMLSpanElement>("output-hint");
 const selectionHint = el<HTMLSpanElement>("selection-hint");
 const insertButton = el<HTMLButtonElement>("insert");
@@ -107,7 +105,6 @@ function insertPlan() {
 	return planSeeds({
 		typed: seeds(),
 		names: selection.map((node) => node.name),
-		fromName: state.seedFromName,
 		max: MAX_SEEDS,
 	});
 }
@@ -247,21 +244,20 @@ async function insert(): Promise<void> {
 
 /**
  * Fill what the user selected. An avatar goes into any shape here, whatever
- * its geometry, so this path is always an image. The seed comes from each
- * layer's own name by default, which is how a page of placeholders named
- * after real people fills itself in one click.
+ * its geometry, so this path is always an image. The seed is the layer's own
+ * name, the same rule Insert follows, which is how a page of placeholders
+ * named after real people fills itself in one click.
+ *
+ * Unlike Insert this is not capped: the layers already exist, so filling them
+ * adds nothing to the file.
  */
 async function fillSelection(): Promise<void> {
 	const list = seeds();
-	if (!state.seedFromName && !list.length) {
-		notify("Add at least one seed", true);
-		return;
-	}
 	const items = [];
 	for (let i = 0; i < selection.length; i++) {
 		const node = selection[i];
-		const seed = state.seedFromName ? node.name : list[i % list.length];
 		const displaySize = Math.max(1, Math.round(node.width));
+		const seed = seedForLayer(node.name, list, i);
 		items.push({ id: node.id, bytes: await png(seed, displaySize) });
 	}
 	post({ type: "fill-selection", items });
@@ -320,7 +316,6 @@ function sync(): void {
 	paletteInput.disabled = !state.usePalette;
 	paletteInput.style.opacity = state.usePalette ? "1" : "0.4";
 	if (paletteInput.value !== state.palette) paletteInput.value = state.palette;
-	seedFromNameInput.checked = state.seedFromName;
 
 	const plan = insertPlan();
 	const list = plan.seeds;
@@ -341,10 +336,9 @@ function sync(): void {
 	// Say out loud that the selection has taken over the count, and say it
 	// again if the cap cut the list short, so no avatar goes missing in silence.
 	if (plan.fromSelection) {
-		const source = state.seedFromName ? "its layer's name" : "the seeds above";
 		selectionHint.textContent = plan.capped
 			? `${plan.selected} layers selected. Insert makes ${list.length}, the most this panel does at once.`
-			: `${plural(plan.selected, "layer")} selected. Insert makes one avatar each, seeded from ${source}.`;
+			: `${plural(plan.selected, "layer")} selected. Insert makes one avatar each, named after its layer.`;
 	} else {
 		selectionHint.textContent =
 			"Select frames or shapes and the count follows them.";
@@ -428,12 +422,6 @@ paletteInput.addEventListener("input", () => {
 
 usePaletteInput.addEventListener("change", () => {
 	state.usePalette = usePaletteInput.checked;
-	sync();
-	save();
-});
-
-seedFromNameInput.addEventListener("change", () => {
-	state.seedFromName = seedFromNameInput.checked;
 	sync();
 	save();
 });

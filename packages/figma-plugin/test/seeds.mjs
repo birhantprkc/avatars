@@ -1,11 +1,12 @@
 /**
  * Tests for the rule that decides how many avatars one insert makes.
  *
- * The promise is that the selection wins: select six frames, get six avatars.
- * Everything else here guards the edges of that promise, because the panel
- * cannot be run in Node and this is where the counting lives.
+ * The promise is that the selection wins: select six frames, get six avatars,
+ * each named after its own layer. Everything else here guards the edges of
+ * that promise, because the panel cannot be run in Node and this is where the
+ * counting lives.
  */
-import { planSeeds } from "../src/seeds.ts";
+import { planSeeds, seedForLayer } from "../src/seeds.ts";
 
 let failures = 0;
 const check = (name, ok, detail = "") => {
@@ -16,7 +17,7 @@ const check = (name, ok, detail = "") => {
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 const TYPED = ["jane@example.com", "acme", "outpace"];
-const base = { typed: TYPED, names: [], fromName: true, max: 24 };
+const base = { typed: TYPED, names: [], max: 24 };
 
 /* ── nothing selected: the seeds box decides ── */
 
@@ -61,43 +62,52 @@ check(
 );
 
 check(
+	"selection: the seeds box does not change the count",
+	planSeeds({ typed: ["only-one"], names: NAMES, max: 24 }).seeds.length === 6,
+);
+
+check(
+	"selection: the seeds box does not change the seeds either",
+	same(planSeeds({ typed: ["only-one"], names: NAMES, max: 24 }).seeds, NAMES),
+);
+
+check(
 	"selection: one selected layer gives one avatar",
 	planSeeds({ ...base, names: ["Ada"] }).seeds.length === 1,
 );
 
-/* ── seeding from the box instead of the name ── */
-
-const cycled = planSeeds({ ...base, names: NAMES, fromName: false });
 check(
-	"selection: typed seeds repeat across the selection",
-	same(cycled.seeds, [
-		"jane@example.com",
-		"acme",
-		"outpace",
-		"jane@example.com",
-		"acme",
-		"outpace",
-	]),
-);
-check(
-	"selection: the count still follows the selection, not the box",
-	cycled.seeds.length === NAMES.length,
+	"selection: an empty seeds box changes nothing",
+	same(planSeeds({ typed: [], names: NAMES, max: 24 }).seeds, NAMES),
 );
 
-check(
-	"selection: an empty box falls back to the layer names",
-	same(
-		planSeeds({ typed: [], names: NAMES, fromName: false, max: 24 }).seeds,
-		NAMES,
-	),
-);
+/* ── the one case a layer borrows a seed ── */
 
 check(
-	"selection: a blank layer name falls back to a typed seed",
+	"a blank layer name falls back to a typed seed",
 	same(planSeeds({ ...base, names: ["  ", "Grace"] }).seeds, [
 		"jane@example.com",
 		"Grace",
 	]),
+);
+
+check(
+	"blank names walk the typed seeds in order",
+	same(planSeeds({ ...base, names: ["", "", ""] }).seeds, TYPED),
+);
+
+check(
+	"a blank name with nothing typed stays blank",
+	same(planSeeds({ typed: [], names: [""], max: 24 }).seeds, [""]),
+);
+
+check(
+	"seedForLayer: a named layer is its own seed",
+	seedForLayer("Ada", TYPED, 0) === "Ada",
+);
+check(
+	"seedForLayer: typed seeds repeat past their end",
+	seedForLayer("", TYPED, 4) === "acme",
 );
 
 /* ── the cap ── */

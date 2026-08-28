@@ -1,5 +1,5 @@
 /**
- * How many avatars one insert makes, and what each of them is seeded with.
+ * How many avatars one insert makes, and what seeds each of them.
  *
  * With a selection, the selection decides: one avatar per selected frame or
  * shape, so laying out a row of six cards and pressing Insert gives back six
@@ -26,10 +26,25 @@ export interface SeedInput {
 	typed: string[];
 	/** Names of the selected layers, in selection order. */
 	names: string[];
-	/** Seed each avatar from the layer it belongs to. */
-	fromName: boolean;
 	/** Never build more than this many in one go. */
 	max: number;
+}
+
+/**
+ * The seed for one selected layer.
+ *
+ * A layer is its own seed. A frame called "Ada Lovelace" always gets Ada's
+ * avatar, in every file, on every machine, which is the whole point of seeding
+ * from the canvas rather than from a text box. Only an unnamed layer has to
+ * borrow a typed seed.
+ */
+export function seedForLayer(
+	name: string,
+	typed: string[],
+	index: number,
+): string {
+	if (name.trim()) return name;
+	return typed.length ? typed[index % typed.length] : name;
 }
 
 /**
@@ -37,13 +52,10 @@ export interface SeedInput {
  *
  * Nothing selected: the typed seeds, capped.
  *
- * Something selected: one seed per selected layer, capped. The layer's own
- * name is the seed when that option is on, so a frame called "Ada Lovelace"
- * always gets Ada's avatar. Otherwise the typed seeds repeat across the
- * selection, and a layer falls back to its name when nothing was typed.
+ * Something selected: one seed per selected layer, capped.
  */
 export function planSeeds(input: SeedInput): SeedPlan {
-	const { typed, names, fromName, max } = input;
+	const { typed, names, max } = input;
 	const cap = Math.max(0, Math.floor(max));
 
 	if (names.length === 0) {
@@ -55,14 +67,10 @@ export function planSeeds(input: SeedInput): SeedPlan {
 		};
 	}
 
-	const seeds = names.slice(0, cap).map((name, index) => {
-		if (fromName && name.trim()) return name;
-		if (typed.length) return typed[index % typed.length];
-		return name;
-	});
-
 	return {
-		seeds,
+		seeds: names
+			.slice(0, cap)
+			.map((name, index) => seedForLayer(name, typed, index)),
 		fromSelection: true,
 		selected: names.length,
 		capped: names.length > cap,
