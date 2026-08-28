@@ -283,7 +283,7 @@ export function SiteHeader() {
 					{/* Live star count, hidden below sm with the label, and until
 					    the count is known so it never flashes an empty state. */}
 					{stars !== null && (
-						<span className="hidden tabular-nums text-white/[0.64] sm:inline">
+						<span className="hidden text-white/[0.64] sm:inline">
 							{formatStars(stars)}
 						</span>
 					)}
