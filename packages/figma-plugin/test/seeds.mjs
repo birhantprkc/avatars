@@ -22,7 +22,10 @@ const base = { typed: TYPED, names: [], fromName: true, max: 24 };
 
 const none = planSeeds(base);
 check("no selection: the typed seeds are the list", same(none.seeds, TYPED));
-check("no selection: not driven by the selection", none.fromSelection === false);
+check(
+	"no selection: not driven by the selection",
+	none.fromSelection === false,
+);
 check("no selection: nothing selected", none.selected === 0);
 
 check(
@@ -45,7 +48,10 @@ const NAMES = ["Ada", "Grace", "Katherine", "Dorothy", "Mary", "Annie"];
 
 const six = planSeeds({ ...base, names: NAMES });
 check("selection: one avatar per selected layer", six.seeds.length === 6);
-check("selection: the count comes from the selection", six.fromSelection === true);
+check(
+	"selection: the count comes from the selection",
+	six.fromSelection === true,
+);
 check("selection: the selected count is reported", six.selected === 6);
 check("selection: not capped at six", six.capped === false);
 
@@ -80,7 +86,10 @@ check(
 
 check(
 	"selection: an empty box falls back to the layer names",
-	same(planSeeds({ typed: [], names: NAMES, fromName: false, max: 24 }).seeds, NAMES),
+	same(
+		planSeeds({ typed: [], names: NAMES, fromName: false, max: 24 }).seeds,
+		NAMES,
+	),
 );
 
 check(
@@ -110,7 +119,10 @@ check(
 
 check(
 	"the same input always gives the same list",
-	same(planSeeds({ ...base, names: NAMES }), planSeeds({ ...base, names: NAMES })),
+	same(
+		planSeeds({ ...base, names: NAMES }),
+		planSeeds({ ...base, names: NAMES }),
+	),
 );
 
 console.log(failures ? `\n${failures} failing` : "\nall good");

@@ -19,6 +19,7 @@ import type {
 	UiMessage,
 } from "../messages.ts";
 import { buildPlan } from "../plan.ts";
+import { planSeeds } from "../seeds.ts";
 
 const DEFAULTS: Settings = {
 	seeds: "jane@example.com\nacme\noutpace",
@@ -33,7 +34,10 @@ const DEFAULTS: Settings = {
 	seedFromName: true,
 };
 
-/** More than this in one go and a Figma file stops being a pleasure. */
+/**
+ * More than this in one go and a Figma file stops being a pleasure. It caps
+ * the typed seeds and the selection alike, and the panel says so when it bites.
+ */
 const MAX_SEEDS = 24;
 /** The preview shows true size up to here, then it stops growing. */
 const MAX_PREVIEW = 128;
@@ -61,6 +65,7 @@ const paletteInput = el<HTMLInputElement>("palette");
 const usePaletteInput = el<HTMLInputElement>("use-palette");
 const seedFromNameInput = el<HTMLInputElement>("seed-from-name");
 const outputHint = el<HTMLSpanElement>("output-hint");
+const selectionHint = el<HTMLSpanElement>("selection-hint");
 const insertButton = el<HTMLButtonElement>("insert");
 const fillButton = el<HTMLButtonElement>("fill");
 
@@ -88,9 +93,26 @@ function seeds(): string[] {
 	return state.seeds
 		.split("\n")
 		.map((line) => line.trim())
-		.filter(Boolean)
-		.slice(0, MAX_SEEDS);
+		.filter(Boolean);
 }
+
+/**
+ * What one insert would make right now.
+ *
+ * The selection wins when there is one: six frames selected means six
+ * avatars, each seeded from the layer it belongs to. With nothing selected
+ * the seeds box decides, one avatar per line.
+ */
+function insertPlan() {
+	return planSeeds({
+		typed: seeds(),
+		names: selection.map((node) => node.name),
+		fromName: state.seedFromName,
+		max: MAX_SEEDS,
+	});
+}
+
+const plural = (n: number, one: string) => (n === 1 ? one : `${n} ${one}s`);
 
 function palette(): string[] | undefined {
 	if (!state.usePalette) return undefined;
@@ -141,8 +163,7 @@ function paint(box: HTMLElement, seed: string, px: number): void {
 	box.replaceChildren(canvas);
 }
 
-function renderPreview(): void {
-	const list = seeds();
+function renderPreview(list: string[]): void {
 	if (!list.length) {
 		hero.replaceChildren();
 		hero.style.width = "0px";
@@ -192,9 +213,9 @@ function frameStyle() {
 }
 
 async function insert(): Promise<void> {
-	const list = seeds();
+	const list = insertPlan().seeds;
 	if (!list.length) {
-		notify("Add at least one seed", true);
+		notify("Select a layer, or add at least one seed", true);
 		return;
 	}
 	if (state.output === "layers") {
@@ -301,7 +322,8 @@ function sync(): void {
 	if (paletteInput.value !== state.palette) paletteInput.value = state.palette;
 	seedFromNameInput.checked = state.seedFromName;
 
-	const list = seeds();
+	const plan = insertPlan();
+	const list = plan.seeds;
 	if (state.output === "layers") {
 		const layers = list.length
 			? buildPlan({
@@ -316,6 +338,18 @@ function sync(): void {
 		outputHint.textContent = `A ${pngSize(state.size)} px PNG, exactly what the web renders.`;
 	}
 
+	// Say out loud that the selection has taken over the count, and say it
+	// again if the cap cut the list short, so no avatar goes missing in silence.
+	if (plan.fromSelection) {
+		const source = state.seedFromName ? "its layer's name" : "the seeds above";
+		selectionHint.textContent = plan.capped
+			? `${plan.selected} layers selected. Insert makes ${list.length}, the most this panel does at once.`
+			: `${plural(plan.selected, "layer")} selected. Insert makes one avatar each, seeded from ${source}.`;
+	} else {
+		selectionHint.textContent =
+			"Select frames or shapes and the count follows them.";
+	}
+
 	fillButton.disabled = selection.length === 0;
 	fillButton.textContent = selection.length
 		? `Fill ${selection.length} selected`
@@ -323,7 +357,7 @@ function sync(): void {
 	insertButton.textContent =
 		list.length > 1 ? `Insert ${list.length}` : "Insert";
 
-	renderPreview();
+	renderPreview(list);
 }
 
 segmented<Pattern>(
