@@ -11,11 +11,7 @@ import {
 import { PackageSwitcher } from "@/components/PackageSwitcher";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import {
-	DEMO_DENSITY,
-	drawPattern,
-	type Pattern,
-} from "@/lib/avatars/patterns";
+import { drawPattern, type Pattern } from "@/lib/avatars/patterns";
 import { useScrollSpy } from "@/lib/use-scroll-spy";
 import { useSmoothCorners } from "@/lib/utils/useSmoothCorners";
 
@@ -168,10 +164,10 @@ function Avatar({
 		const ctx = canvas.getContext("2d");
 		if (!ctx) return;
 		ctx.clearRect(0, 0, RENDER_SIZE, RENDER_SIZE);
-		// One density across the page: the previews sit next to each other at
-		// different sizes, so the ramp would read as an inconsistency here.
-		drawPattern(ctx, seed, RENDER_SIZE, pattern, { displaySize: DEMO_DENSITY });
-	}, [seed, pattern]);
+		// Drawn at RENDER_SIZE, but the complexity follows the size the preview
+		// is shown at, exactly like the published component.
+		drawPattern(ctx, seed, RENDER_SIZE, pattern, { displaySize: size });
+	}, [seed, pattern, size]);
 
 	const blurPx =
 		pattern === "dither" ? 0 : Math.max(1, Math.round(size * 0.06));

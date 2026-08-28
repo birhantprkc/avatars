@@ -13,9 +13,9 @@ interface GradientAvatarProps {
 	pattern?: Pattern;
 	/**
 	 * Size the complexity is derived from, in CSS pixels. Defaults to `size`,
-	 * which is what a real app wants: small avatars draw simpler. The demo
-	 * surfaces pass `DEMO_DENSITY` instead, so a page that shows one seed at
-	 * several sizes holds one density.
+	 * which is what every surface wants: an avatar is drawn for the size it is
+	 * shown at. Set it only when the canvas is drawn larger than it is
+	 * displayed, or when a responsive wrapper owns the real dimensions.
 	 */
 	displaySize?: number;
 	/**
