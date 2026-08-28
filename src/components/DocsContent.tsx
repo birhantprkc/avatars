@@ -69,6 +69,24 @@ function H2({ children }: { children: ReactNode }) {
 	);
 }
 
+/** Sub-heading inside a section: the section rhythm, one step quieter. */
+function H3({ children }: { children: ReactNode }) {
+	return (
+		<h3
+			style={{
+				fontSize: 14,
+				fontWeight: 450,
+				color: INK,
+				letterSpacing: "-0.1px",
+				margin: "48px 0 0",
+				textWrap: "balance",
+			}}
+		>
+			{children}
+		</h3>
+	);
+}
+
 function P({ children, muted }: { children: ReactNode; muted?: boolean }) {
 	return (
 		<p
@@ -196,6 +214,13 @@ function Avatar({
 		</span>
 	);
 }
+
+/**
+ * Sizes the "complexity follows the size" preview steps through. Spread wide
+ * enough that the simplification is visible between neighbours, and ending at
+ * the size where the ramp reaches full detail.
+ */
+const DENSITY_LADDER = [24, 32, 48, 84, 160];
 
 function Preview({ children }: { children: ReactNode }) {
 	const smoothRef = useSmoothCorners<HTMLDivElement>(16);
@@ -620,6 +645,36 @@ export function DocsContent({
 										</div>
 									</Preview>
 									<Code html={highlighted.examples} />
+
+									<H3>Complexity follows the size</H3>
+									<P>
+										An avatar is drawn for the size it is shown at. A 24px
+										avatar in a comment thread gets two colors and a few big
+										shapes, so it reads as one clean mark instead of a muddy
+										blob; a 160px profile picture gets the full palette and all
+										the detail. Same seed, same avatar, just fewer parts when
+										small. <C>size</C> drives this, so there is nothing to
+										configure.
+									</P>
+									<Preview>
+										{DENSITY_LADDER.map((px) => (
+											<div
+												key={px}
+												style={{
+													display: "flex",
+													flexDirection: "column",
+													alignItems: "center",
+													justifyContent: "flex-end",
+													alignSelf: "stretch",
+													gap: 8,
+												}}
+											>
+												<Avatar seed="studio" size={px} />
+												<PreviewLabel>{px}px</PreviewLabel>
+											</div>
+										))}
+									</Preview>
+									<Code html={highlighted.density} />
 								</Col>
 							</section>
 
