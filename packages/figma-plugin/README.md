@@ -7,10 +7,22 @@ open, recolor, and pull apart.
 ```
 Seeds        jane@example.com
 Pattern      Mesh · Dither
-Shape        Circle · Squircle · Rounded · Square
-Size         16 – 512 px
+Detail       fewer or more colors and shapes
+Shape        Circle · Rounded · Square
 Output       Layers · Image
 ```
+
+## Install
+
+The plugin is not on the Figma community yet. Download it from the site and
+import it into the Figma desktop app.
+
+1. Get the zip from <https://avatars.outpacestudios.com/figma-plugin>.
+2. Unzip it, and keep the folder on disk.
+3. In the Figma desktop app: **Plugins → Development → Import plugin from
+   manifest**, and choose the `manifest.json` in that folder.
+
+Import works in the desktop app only. The full user guide is on that page.
 
 ## What it does
 
@@ -81,7 +93,13 @@ pnpm install                 # from the repo root
 pnpm --filter @outpacelabs/avatars-figma build     # → dist/code.js, dist/ui.html
 pnpm --filter @outpacelabs/avatars-figma dev       # rebuild on save
 pnpm --filter @outpacelabs/avatars-figma test      # the engine-to-Figma bridge
+pnpm --filter @outpacelabs/avatars-figma pack      # → public/avatars-figma-plugin.zip
 ```
+
+`pack` builds the plugin, then zips the manifest and the two output files into
+the site's `public` folder as the download the site serves. The zip is a
+committed static asset, so run `pack` after a plugin change and commit the new
+zip. The site build only serves it.
 
 Then in the Figma desktop app: **Plugins → Development → Import plugin from
 manifest**, and choose `packages/figma-plugin/manifest.json`. Figma writes a

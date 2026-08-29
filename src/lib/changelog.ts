@@ -23,6 +23,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
 	{
+		version: "0.6.0",
+		date: "2026-08-28",
+		title: "Every seed gets its own hue",
+		summary:
+			"Different seeds could land on almost the same colors. The base hue now spreads across the full range, so distinct seeds look distinct.",
+		changes: [
+			{
+				kind: "fixed",
+				text: "The base hue came from a coarse formula with only 144 possible values, 2.5° apart, so different string seeds often shared a look. It now uses golden-ratio hashing across the full range, so two distinct seeds almost never share a hue.",
+			},
+			{
+				kind: "improved",
+				text: "This re-rolls the exact colors of existing seeds. The promise is unchanged: the same seed always renders the same avatar; each palette is just drawn from a finer, better-spread hue. The seed 0 avatar is unchanged.",
+			},
+		],
+	},
+	{
 		version: "0.5.0",
 		date: "2026-08-14",
 		title: "Avatars that fit their size",

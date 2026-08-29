@@ -217,6 +217,7 @@ const navLink = (active: boolean) =>
 const NAV = [
 	{ href: "/", label: "Home" },
 	{ href: "/docs", label: "Docs" },
+	{ href: "/figma-plugin", label: "Figma" },
 	{ href: "/changelog", label: "Changelog" },
 	// Create is hidden for now, the route still exists, just unlinked here
 	// (and dropped from the sitemap). Re-add to re-enable.

@@ -8,6 +8,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "node scripts/build.mjs",
+		"pack": "node scripts/pack.mjs",
 		"dev": "node scripts/build.mjs --watch",
 		"test": "node test/plan.mjs && node test/seeds.mjs",
 		"typecheck": "tsc --noEmit"

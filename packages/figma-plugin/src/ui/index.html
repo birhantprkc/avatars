@@ -4,18 +4,35 @@
 		<meta charset="utf-8" />
 		<title>Avatars</title>
 		<style>
+			/* FONTS */
+
 			/*
-			 * The panel wears the same clothes as avatars.outpacestudios.com:
-			 * black, thin white hairlines, one accent of full-strength white on
-			 * the primary action.
+			 * The panel wears the same clothes as avatars.outpacestudios.com and
+			 * the site's home grid: black, thin white hairlines, seed cards on the
+			 * left, controls on the right, one accent of full white on the primary
+			 * action. The two brand fonts inline above: Inter for the sans face,
+			 * Geist Mono for the seed captions and the value readouts.
 			 */
 			:root {
 				--ink: rgba(255, 255, 255, 0.92);
+				--ink-input: rgba(255, 255, 255, 0.88);
 				--body: rgba(255, 255, 255, 0.62);
 				--muted: rgba(255, 255, 255, 0.42);
-				--line: rgba(255, 255, 255, 0.12);
-				--raise: rgba(255, 255, 255, 0.06);
-				--raise-strong: rgba(255, 255, 255, 0.12);
+				--idle: rgba(255, 255, 255, 0.48);
+				--idle-hover: rgba(255, 255, 255, 0.8);
+				--faint: rgba(255, 255, 255, 0.28);
+				--line: rgba(255, 255, 255, 0.06);
+				--raise: rgba(255, 255, 255, 0.04);
+				--raise-hover: rgba(255, 255, 255, 0.06);
+				--pill: rgba(255, 255, 255, 0.06);
+				--pill-on: rgba(255, 255, 255, 0.14);
+				--spring: cubic-bezier(0.5, 1.25, 0.5, 1);
+				/* The site's one entrance curve, tokens.motion.easeOut. */
+				--ease: cubic-bezier(0.22, 1, 0.36, 1);
+				--font-sans: "InterVar", ui-sans-serif, system-ui, -apple-system,
+					"Segoe UI", sans-serif;
+				--font-mono: "GeistMono", ui-monospace, "SF Mono", SFMono-Regular,
+					Menlo, Consolas, monospace;
 			}
 
 			* {
@@ -31,234 +48,361 @@
 				margin: 0;
 				background: #000;
 				color: var(--ink);
-				font-family: Inter, "Inter var", ui-sans-serif, system-ui,
-					-apple-system, "Segoe UI", sans-serif;
-				font-size: 12px;
+				font-family: var(--font-sans);
+				font-size: 13px;
 				line-height: 1.4;
 				-webkit-font-smoothing: antialiased;
+				text-rendering: optimizeLegibility;
 			}
 
-			main {
+			/* The whole panel is one faint raised surface over black, the same
+			   bg-white/[0.04] the demo frame wears. The seed cards then layer
+			   their own 0.04 on top of it, so a card reads a touch lighter than
+			   the panel, exactly as it does on the web. */
+			.panel {
+				display: flex;
+				height: 100%;
+				background: var(--raise);
+			}
+
+			/* ── left: the seed grid ── */
+
+			/* The seed column fades to nothing at the top and bottom edges, so a
+			   row that scrolls past the frame melts away rather than being cut on
+			   a hard line. The mask stays fixed to the viewport as the cards move
+			   under it. */
+			.seeds {
+				width: 320px;
+				flex: none;
+				overflow-y: auto;
+				-webkit-mask-image: linear-gradient(
+					to bottom,
+					transparent 0,
+					#000 20px,
+					#000 calc(100% - 20px),
+					transparent 100%
+				);
+				mask-image: linear-gradient(
+					to bottom,
+					transparent 0,
+					#000 20px,
+					#000 calc(100% - 20px),
+					transparent 100%
+				);
+			}
+
+			.grid {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 12px;
+				padding: 12px;
+				align-content: start;
+			}
+
+			.card {
+				position: relative;
 				display: flex;
 				flex-direction: column;
-				height: 100%;
-			}
-
-			/* ── preview ── */
-
-			.preview {
-				flex: none;
-				border-bottom: 1px solid var(--line);
-				padding: 20px 16px 16px;
-				background:
-					radial-gradient(
-						120% 100% at 50% 0%,
-						rgba(255, 255, 255, 0.06),
-						transparent 70%
-					),
-					#000;
-			}
-
-			.stage {
-				display: flex;
 				align-items: center;
-				justify-content: center;
-				height: 136px;
+				justify-content: space-between;
+				aspect-ratio: 7 / 8;
+				padding: 24px 12px 12px;
+				border-radius: 16px;
+				background: var(--raise);
+				cursor: text;
+				transition: background 120ms ease;
 			}
 
-			.strip {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				gap: 8px;
-				min-height: 28px;
-				margin-top: 12px;
+			.card:hover {
+				background: var(--raise-hover);
 			}
 
-			.shape {
+			.avatar {
+				width: 84px;
+				height: 84px;
 				overflow: hidden;
-				flex: none;
-				background: #111;
+				background: var(--raise);
+				transition: border-radius 0.3s var(--spring);
 			}
 
-			.shape canvas {
+			.avatar canvas {
 				display: block;
 				width: 100%;
 				height: 100%;
 			}
 
-			/* ── controls ── */
-
-			.controls {
-				flex: 1 1 auto;
-				overflow-y: auto;
-				padding: 16px;
-				display: flex;
-				flex-direction: column;
-				gap: 14px;
+			.card input {
+				width: 100%;
+				min-width: 0;
+				padding: 6px;
+				border: 0;
+				border-radius: 8px;
+				background: transparent;
+				color: var(--body);
+				text-align: center;
+				font-family: var(--font-mono);
+				font-size: 11px;
+				line-height: 16px;
+				transition: color 120ms ease;
 			}
 
-			.field {
+			.card input:focus {
+				outline: none;
+				color: var(--ink-input);
+			}
+
+			.card input::placeholder {
+				color: var(--faint);
+			}
+
+			.remove {
+				position: absolute;
+				top: 6px;
+				right: 6px;
+				z-index: 1;
+				display: grid;
+				place-items: center;
+				width: 24px;
+				height: 24px;
+				padding: 0;
+				border: 0;
+				border-radius: 999px;
+				background: transparent;
+				color: rgba(255, 255, 255, 0.4);
+				cursor: pointer;
+				opacity: 0;
+				transition: background 120ms ease, color 120ms ease, opacity 120ms ease;
+			}
+
+			.card:hover .remove,
+			.remove:focus-visible {
+				opacity: 1;
+			}
+
+			.remove:hover {
+				background: rgba(255, 255, 255, 0.1);
+				color: var(--ink-input);
+			}
+
+			.add {
+				display: grid;
+				place-items: center;
+				aspect-ratio: 7 / 8;
+				border: 0;
+				border-radius: 16px;
+				background: rgba(255, 255, 255, 0.02);
+				color: rgba(255, 255, 255, 0.4);
+				cursor: pointer;
+				transition: background 120ms ease, color 120ms ease, transform 120ms ease;
+			}
+
+			.add:hover {
+				background: rgba(255, 255, 255, 0.05);
+				color: var(--ink-input);
+			}
+
+			.add:active {
+				transform: scale(0.99);
+			}
+
+			/* ── right: the controls ── */
+
+			.controls-col {
+				flex: 1;
 				display: flex;
 				flex-direction: column;
-				gap: 7px;
+				min-width: 0;
+				border-left: 1px solid var(--line);
+			}
+
+			.controls {
+				flex: 1;
+				overflow-y: auto;
+			}
+
+			.group {
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+				padding: 16px 12px;
+				border-top: 1px solid var(--line);
+			}
+
+			/* The demo wraps the stack in 12 px of padding and zeroes the first
+			   group's top, so the first label stands 12 px below the top edge,
+			   not the group's own 16 px. */
+			.group:first-child {
+				border-top: 0;
+				padding-top: 12px;
 			}
 
 			.label {
 				display: flex;
 				align-items: center;
 				justify-content: space-between;
-				gap: 8px;
-				color: var(--body);
-				font-size: 11px;
-				letter-spacing: 0.01em;
-			}
-
-			.value {
-				color: var(--muted);
-				font-variant-numeric: tabular-nums;
-			}
-
-			.hint {
-				color: var(--muted);
-				font-size: 10.5px;
-			}
-
-			textarea,
-			input[type="text"] {
-				width: 100%;
-				padding: 8px 10px;
-				border: 1px solid var(--line);
-				border-radius: 8px;
-				background: transparent;
+				gap: 12px;
 				color: var(--ink);
-				font: inherit;
-				font-size: 11.5px;
-				resize: none;
+				font-size: 13px;
+				font-weight: 450;
+				line-height: 20px;
 			}
 
-			textarea:focus,
-			input[type="text"]:focus {
-				outline: none;
-				border-color: rgba(255, 255, 255, 0.34);
+			.label .val {
+				color: var(--muted);
+				font-family: var(--font-mono);
+				font-size: 12px;
+				font-weight: 400;
+				line-height: 20px;
+				font-variant-numeric: tabular-nums;
+				white-space: nowrap;
 			}
 
-			textarea::placeholder,
-			input::placeholder {
-				color: rgba(255, 255, 255, 0.28);
-			}
-
-			/* ── segmented control ── */
+			/* ── segmented control, with a sliding pill ── */
 
 			.seg {
-				display: grid;
-				grid-auto-flow: column;
-				grid-auto-columns: 1fr;
-				gap: 2px;
-				padding: 2px;
-				border: 1px solid var(--line);
-				border-radius: 9px;
+				position: relative;
+				display: flex;
+				min-width: 0;
+				padding: 4px;
+				border-radius: 999px;
+				background: var(--pill);
+			}
+
+			.seg .pill {
+				position: absolute;
+				top: 4px;
+				left: 0;
+				height: calc(100% - 8px);
+				border-radius: 999px;
+				background: var(--pill-on);
+				transition: transform 0.3s var(--spring), width 0.3s var(--spring);
+				pointer-events: none;
 			}
 
 			.seg button {
-				padding: 5px 4px;
+				position: relative;
+				z-index: 1;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 6px;
+				flex: 1 1 0;
+				min-width: 0;
+				padding: 6px 10px;
 				border: 0;
-				border-radius: 7px;
-				background: transparent;
-				color: var(--muted);
+				border-radius: 999px;
+				background: none;
+				color: var(--idle);
 				font: inherit;
-				font-size: 11px;
+				font-size: 13px;
+				font-weight: 550;
+				line-height: 20px;
 				cursor: pointer;
-				transition: background 120ms ease, color 120ms ease;
+				transition: color 120ms ease;
+			}
+
+			/* The pattern glyph draws in the button's own color, so it dims and
+			   brightens with the label as the selection moves. */
+			.seg-icon {
+				display: inline-flex;
+				flex: none;
 			}
 
 			.seg button:hover {
-				color: var(--ink);
+				color: var(--idle-hover);
 			}
 
 			.seg button[aria-pressed="true"] {
-				background: var(--raise-strong);
 				color: var(--ink);
 			}
 
 			/* ── slider ── */
 
-			input[type="range"] {
+			.fp-range {
+				-webkit-appearance: none;
+				appearance: none;
 				width: 100%;
+				height: 4px;
+				border-radius: 99px;
+				background: rgba(255, 255, 255, 0.12);
+				outline: none;
+				cursor: pointer;
+			}
+
+			.fp-range::-webkit-slider-thumb {
+				-webkit-appearance: none;
+				appearance: none;
+				width: 16px;
 				height: 16px;
-				margin: 0;
-				appearance: none;
-				background: transparent;
-				cursor: ew-resize;
+				border-radius: 99px;
+				background: #fff;
+				box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+				cursor: grab;
 			}
 
-			input[type="range"]::-webkit-slider-runnable-track {
-				height: 2px;
-				border-radius: 2px;
-				background: var(--raise-strong);
+			.fp-range::-webkit-slider-thumb:active {
+				cursor: grabbing;
 			}
 
-			input[type="range"]::-webkit-slider-thumb {
-				appearance: none;
-				width: 12px;
-				height: 12px;
-				margin-top: -5px;
-				border-radius: 50%;
-				background: var(--ink);
+			.fp-range:focus-visible {
+				outline: 2px solid rgba(255, 255, 255, 0.4);
+				outline-offset: 4px;
 			}
 
-			/* ── checkbox ── */
-
-			.check {
-				display: inline-flex;
-				align-items: center;
-				gap: 7px;
-				color: var(--body);
-				cursor: pointer;
+			.hidden {
+				display: none;
 			}
 
-			.check input {
-				appearance: none;
-				flex: none;
-				width: 14px;
-				height: 14px;
-				margin: 0;
-				border: 1px solid var(--line);
-				border-radius: 4px;
-				background: transparent;
-				transition: background 120ms, border-color 120ms;
+			/* The radius slider grows open under Rounded and folds away again.
+			   The grid-row trick animates from a real height to zero, so it needs
+			   no fixed pixel height. The negative margin cancels the group gap
+			   while it is closed, so no empty band remains. */
+			.reveal {
+				display: grid;
+				grid-template-rows: 0fr;
+				opacity: 0;
+				margin-top: -12px;
+				transition: grid-template-rows 0.28s var(--ease),
+					opacity 0.28s var(--ease), margin-top 0.28s var(--ease);
 			}
 
-			.check:hover input {
-				border-color: rgba(255, 255, 255, 0.28);
+			.reveal.open {
+				grid-template-rows: 1fr;
+				opacity: 1;
+				margin-top: -4px;
 			}
 
-			.check input:checked {
-				border-color: var(--ink);
-				background: var(--ink)
-					url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2 5 8.5 9.5 3.6' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
-					center / 12px 12px no-repeat;
+			/* The inner box must clip for the height animation to work. So it also
+			   clips the slider thumb unless it holds enough room. The thumb is
+			   16 px on a 4 px track, so it reaches 6 px past the track each way.
+			   8 px of padding gives it room with a little to spare. */
+			.reveal-inner {
+				overflow: hidden;
+				min-height: 0;
+				padding: 8px 0;
 			}
 
-			.check input:focus-visible {
-				outline: 1px solid var(--ink);
-				outline-offset: 2px;
+			/* A new seed card pops in, the same spring the web demo uses. */
+			@keyframes pop {
+				from {
+					opacity: 0;
+					transform: scale(0.8);
+				}
+				to {
+					opacity: 1;
+					transform: scale(1);
+				}
 			}
 
-			.ghost {
-				border: 0;
-				padding: 0;
-				background: none;
-				color: var(--muted);
-				font: inherit;
-				font-size: 11px;
-				text-decoration: underline;
-				text-underline-offset: 3px;
-				cursor: pointer;
+			.pop {
+				animation: pop 0.32s var(--spring);
 			}
 
-			.ghost:hover {
-				color: var(--ink);
+			/* A removed card plays the same spring in reverse: it shrinks and
+			   fades before it leaves the grid. `forwards` holds the small, clear
+			   end state, so the card does not flash back to full first. */
+			.pop-out {
+				animation: pop 0.32s var(--spring) reverse forwards;
 			}
 
 			/* ── footer ── */
@@ -267,19 +411,25 @@
 				flex: none;
 				display: flex;
 				gap: 8px;
-				padding: 12px 16px;
+				padding: 12px;
 				border-top: 1px solid var(--line);
 			}
 
 			.action {
 				flex: 1;
-				padding: 9px 10px;
-				border-radius: 9px;
-				border: 1px solid transparent;
+				padding: 10px 16px;
+				border: 0;
+				border-radius: 999px;
 				font: inherit;
-				font-size: 11.5px;
+				font-size: 13px;
+				font-weight: 550;
+				line-height: 20px;
 				cursor: pointer;
-				transition: opacity 120ms ease, background 120ms ease;
+				transition: background 120ms ease, opacity 120ms ease, transform 120ms ease;
+			}
+
+			.action:active:not(:disabled) {
+				transform: scale(0.99);
 			}
 
 			.primary {
@@ -287,18 +437,29 @@
 				color: #000;
 			}
 
+			.primary:hover:not(:disabled) {
+				background: rgba(255, 255, 255, 0.88);
+			}
+
+			/* The secondary action is a real filled button while it can act. It
+			   reads as a solid gray pill with bright text, not a faint outline.
+			   When it is disabled the base fill and the 0.5 opacity below dim it. */
 			.secondary {
-				background: transparent;
-				border-color: var(--line);
-				color: var(--ink);
+				background: var(--pill);
+				color: var(--body);
+			}
+
+			.secondary:not(:disabled) {
+				background: rgba(255, 255, 255, 0.12);
+				color: var(--ink-input);
 			}
 
 			.secondary:hover:not(:disabled) {
-				background: var(--raise);
+				background: rgba(255, 255, 255, 0.16);
 			}
 
 			.action:disabled {
-				opacity: 0.38;
+				opacity: 0.5;
 				cursor: default;
 			}
 
@@ -310,72 +471,46 @@
 		</style>
 	</head>
 	<body>
-		<main>
-			<section class="preview">
-				<div class="stage"><div class="shape" id="hero"></div></div>
-				<div class="strip" id="strip"></div>
+		<main class="panel">
+			<section class="seeds">
+				<div class="grid" id="grid"></div>
 			</section>
 
-			<div class="controls">
-				<div class="field">
-					<span class="label">
-						Seeds, one per line
-						<button type="button" class="ghost" id="shuffle">Shuffle</button>
-					</span>
-					<textarea id="seeds" rows="3" spellcheck="false"></textarea>
-					<span class="hint" id="selection-hint"></span>
+			<section class="controls-col">
+				<div class="controls">
+					<div class="group">
+						<span class="label">Pattern</span>
+						<div class="seg" id="pattern"></div>
+					</div>
+
+					<div class="group">
+						<span class="label">Detail<span class="val" id="detail-value"></span></span>
+						<input type="range" class="fp-range" id="detail" />
+					</div>
+
+					<div class="group">
+						<span class="label">Shape<span class="val" id="radius-value"></span></span>
+						<div class="seg" id="shape"></div>
+						<div class="reveal" id="radius-reveal">
+							<div class="reveal-inner">
+								<input type="range" class="fp-range" id="radius" />
+							</div>
+						</div>
+					</div>
+
+					<div class="group">
+						<span class="label">Output</span>
+						<div class="seg" id="output"></div>
+					</div>
 				</div>
 
-				<div class="field">
-					<span class="label">Pattern</span>
-					<div class="seg" id="pattern"></div>
-				</div>
-
-				<div class="field">
-					<span class="label">Shape</span>
-					<div class="seg" id="shape"></div>
-				</div>
-
-				<div class="field">
-					<span class="label">Size<span class="value" id="size-value"></span></span>
-					<input type="range" id="size" min="16" max="512" step="1" />
-				</div>
-
-				<div class="field" id="radius-field">
-					<span class="label">
-						Corner radius<span class="value" id="radius-value"></span>
-					</span>
-					<input type="range" id="radius" min="0" max="128" step="1" />
-				</div>
-
-				<div class="field">
-					<span class="label">Output</span>
-					<div class="seg" id="output"></div>
-					<span class="hint" id="output-hint"></span>
-				</div>
-
-				<div class="field">
-					<span class="label">
-						<label class="check">
-							<input type="checkbox" id="use-palette" />
-							Brand colors
-						</label>
-					</span>
-					<input
-						type="text"
-						id="palette"
-						placeholder="#0F62FE, #FF3D00, #12E29A"
-					/>
-				</div>
-
-			</div>
-
-			<footer>
-				<button type="button" class="action primary" id="insert">Insert</button>
-				<button type="button" class="action secondary" id="fill" disabled>
-					Fill selection
-				</button>
-			</footer>
+				<footer>
+					<button type="button" class="action primary" id="insert">Insert</button>
+					<button type="button" class="action secondary" id="fill" disabled>
+						Fill selection
+					</button>
+				</footer>
+			</section>
 		</main>
 		<!-- bundle -->
 	</body>

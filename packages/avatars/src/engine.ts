@@ -67,7 +67,11 @@ const HARMONY_TYPES: GeneratedHarmony[] = [
 	"complementary",
 ];
 
-const GOLDEN_ANGLE = 137.5;
+// Golden-ratio conjugate, for golden-ratio hashing of the base hue. The
+// fraction of `s * this` is evenly spread across 0..1, so sequential seeds
+// fan out and hashed seeds keep full resolution. The old `(s * 137.5) % 360`
+// gave only 144 distinct hues, so different string seeds collided often.
+const GOLDEN_RATIO_CONJUGATE = 0.618033988749895;
 
 /** Default blur radius as a fraction of the rendered dimension. */
 export const DEFAULT_BLUR_FRACTION = 0.06;
@@ -199,7 +203,7 @@ export function generatePalette(
 		return { seed: s, colors, harmony: "custom" };
 	}
 	const random = seededRandom(s);
-	const baseHue = (s * GOLDEN_ANGLE) % 360;
+	const baseHue = ((s * GOLDEN_RATIO_CONJUGATE) % 1) * 360;
 	const harmonyIndex = Math.floor(random() * HARMONY_TYPES.length);
 	const harmony = HARMONY_TYPES[harmonyIndex];
 	const hues = harmonyHues(baseHue, harmony);

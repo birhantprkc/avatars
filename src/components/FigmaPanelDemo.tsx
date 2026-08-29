@@ -1,13 +1,12 @@
 "use client";
 
 import { tap as tapSound } from "@outpacelabs/audio";
-import { ShuffleIcon } from "@radix-ui/react-icons";
+import { Plus, Shuffle, X } from "@keyline-icons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
 	type CSSProperties,
 	useEffect,
 	useLayoutEffect,
-	useMemo,
 	useRef,
 	useState,
 } from "react";
@@ -36,15 +35,12 @@ type Output = "layers" | "image";
 
 /** More than this in one insert and a Figma file stops being a pleasure. */
 const MAX_SEEDS = 24;
-/** The hero shows true size up to here, then it stops growing. */
-const MAX_PREVIEW = 120;
-/** Other seeds, shown small beneath the first one. */
-const STRIP_SIZE = 24;
-const MAX_STRIP = 7;
+/** Avatar render size inside a seed card, in CSS px. */
+const CARD_AVATAR_PX = 84;
 /** Blur radius as a fraction of display size, matches the baked-image look. */
 const BLUR_FRACTION = 0.06;
 
-const DEFAULT_SEEDS = "jane@example.com\nacme\noutpace";
+const DEFAULT_SEEDS = ["jane@example.com", "acme", "outpace"];
 
 /** Draw resolution for a shown size: above display size so the blur is smooth. */
 function resolutionFor(px: number): number {
@@ -108,8 +104,11 @@ function ShapeAvatar({
 		const ctx = canvas.getContext("2d");
 		if (!ctx) return;
 		ctx.clearRect(0, 0, resolution, resolution);
-		drawPattern(ctx, seed, resolution, pattern);
-	}, [seed, pattern, resolution]);
+		// Both the hero and the strip preview one avatar: the one inserted at
+		// `size`. So the detail follows the chosen output size, not each preview
+		// box. Without this the hero and the strip show different complexity.
+		drawPattern(ctx, seed, resolution, pattern, { displaySize: size });
+	}, [seed, pattern, resolution, size]);
 
 	const blur =
 		pattern === "mesh" ? Math.max(1, Math.round(px * BLUR_FRACTION)) : 0;
@@ -131,6 +130,103 @@ function ShapeAvatar({
 				}}
 			/>
 		</span>
+	);
+}
+
+/* ── seed cards, the site's home-grid language ── */
+
+/** One seed as a card: the avatar, plus an editable seed caption below it. */
+function SeedCard({
+	seed,
+	index,
+	pattern,
+	shape,
+	rad,
+	size,
+	canRemove,
+	onChange,
+	onRemove,
+	autoFocus,
+}: {
+	seed: string;
+	index: number;
+	pattern: Pattern;
+	shape: Shape;
+	rad: number;
+	size: number;
+	canRemove: boolean;
+	onChange: (value: string) => void;
+	onRemove: () => void;
+	autoFocus: boolean;
+}) {
+	const cardRef = useSmoothCorners<HTMLDivElement>(16);
+	const inputRef = useRef<HTMLInputElement>(null);
+
+	useEffect(() => {
+		if (autoFocus) inputRef.current?.select();
+	}, [autoFocus]);
+
+	return (
+		<div
+			ref={cardRef}
+			className="group relative flex aspect-square flex-col items-center justify-center gap-2 rounded-[16px] bg-white/[0.04] p-3 transition-colors hover:bg-white/[0.06]"
+		>
+			{canRemove && (
+				<button
+					type="button"
+					title="Remove seed"
+					aria-label={`Remove seed ${index + 1}`}
+					onClick={() => {
+						tapSound();
+						onRemove();
+					}}
+					className="absolute right-1.5 top-1.5 z-[1] grid size-6 cursor-pointer place-items-center rounded-full text-white/[0.4] opacity-0 transition hover:bg-white/[0.1] hover:text-white/[0.88] focus-visible:opacity-100 group-hover:opacity-100"
+				>
+					<X size={13} aria-hidden="true" />
+				</button>
+			)}
+			<ShapeAvatar
+				seed={seed.trim() || " "}
+				px={CARD_AVATAR_PX}
+				pattern={pattern}
+				shape={shape}
+				rad={rad}
+				size={size}
+			/>
+			<input
+				ref={inputRef}
+				value={seed}
+				onChange={(e) => onChange(e.target.value)}
+				spellCheck={false}
+				autoComplete="off"
+				placeholder="seed"
+				aria-label={`Seed ${index + 1}`}
+				style={{ fontFamily: font.mono }}
+				className="w-full min-w-0 rounded-[7px] bg-transparent px-1.5 py-0.5 text-center text-[11px] leading-4 text-white/[0.62] transition-colors placeholder:text-white/[0.28] hover:bg-white/[0.04] focus:bg-white/[0.06] focus:text-white/[0.88] focus:outline-none"
+			/>
+		</div>
+	);
+}
+
+/** The empty card. Clicking it adds a seed. */
+function AddCard({ onAdd }: { onAdd: () => void }) {
+	const cardRef = useSmoothCorners<HTMLButtonElement>(16);
+	return (
+		<button
+			ref={cardRef}
+			type="button"
+			title="Add seed"
+			aria-label="Add seed"
+			onClick={() => {
+				tapSound();
+				onAdd();
+			}}
+			className="group grid aspect-square cursor-pointer place-items-center rounded-[16px] bg-white/[0.02] transition-colors hover:bg-white/[0.05] motion-safe:active:scale-[0.99]"
+		>
+			<span className="grid size-9 place-items-center rounded-full bg-white/[0.06] text-white/[0.4] transition-colors group-hover:bg-white/[0.1] group-hover:text-white/[0.88]">
+				<Plus size={18} aria-hidden="true" />
+			</span>
+		</button>
 	);
 }
 
@@ -234,45 +330,6 @@ function Slider({
 	);
 }
 
-/** Pill toggle, the site's monochrome switch: white track, black knob when on. */
-function Toggle({
-	checked,
-	onChange,
-	children,
-}: {
-	checked: boolean;
-	onChange: (v: boolean) => void;
-	children: React.ReactNode;
-}) {
-	return (
-		<label className="flex cursor-pointer items-center justify-between gap-3">
-			<span style={type.label} className="leading-5">
-				{children}
-			</span>
-			<button
-				type="button"
-				role="switch"
-				aria-checked={checked}
-				onClick={() => {
-					tapSound();
-					onChange(!checked);
-				}}
-				className={`relative h-[18px] w-[32px] shrink-0 cursor-pointer rounded-full transition-colors ${
-					checked ? "bg-white/[0.9]" : "bg-white/[0.12]"
-				}`}
-			>
-				<span
-					className={`absolute top-1/2 h-[14px] w-[14px] -translate-y-1/2 rounded-full transition-transform ${
-						checked
-							? "translate-x-[16px] bg-black"
-							: "translate-x-[2px] bg-white/[0.7]"
-					}`}
-				/>
-			</button>
-		</label>
-	);
-}
-
 /* ── options ── */
 
 const PATTERN_OPTIONS: { value: Pattern; label: string }[] = [
@@ -289,32 +346,46 @@ const OUTPUT_OPTIONS: { value: Output; label: string }[] = [
 	{ value: "layers", label: "Layers" },
 	{ value: "image", label: "Image" },
 ];
+/** Four size presets, a clean 2x ramp. The default 96 sits in the middle. */
+const SIZE_OPTIONS = [48, 96, 192, 384].map((s) => ({
+	value: String(s),
+	label: String(s),
+}));
 
 /* ── panel ── */
 
 export function FigmaPanelDemo() {
-	const [seedsText, setSeedsText] = useState(DEFAULT_SEEDS);
+	const [seeds, setSeeds] = useState<string[]>(DEFAULT_SEEDS);
+	const [focusIndex, setFocusIndex] = useState<number | null>(null);
 	const [pattern, setPattern] = useState<Pattern>("mesh");
 	const [shape, setShape] = useState<Shape>("circle");
 	const [size, setSize] = useState(96);
 	const [rad, setRad] = useState(24);
 	const [output, setOutput] = useState<Output>("layers");
-	const [usePalette, setUsePalette] = useState(false);
-	const [palette, setPalette] = useState("");
-	const [seedFromName, setSeedFromName] = useState(true);
 	const [toast, setToast] = useState<string | null>(null);
 
 	const cardRef = useSmoothCorners<HTMLDivElement>(radius.card);
 
-	const seeds = useMemo(
-		() =>
-			seedsText
-				.split("\n")
-				.map((line) => line.trim())
-				.filter(Boolean)
-				.slice(0, MAX_SEEDS),
-		[seedsText],
-	);
+	const filledSeeds = seeds.map((s) => s.trim()).filter(Boolean);
+	const count = filledSeeds.length;
+
+	function updateSeed(i: number, value: string) {
+		setSeeds((prev) => prev.map((s, idx) => (idx === i ? value : s)));
+	}
+	function removeSeed(i: number) {
+		setSeeds((prev) =>
+			prev.length > 1 ? prev.filter((_, idx) => idx !== i) : prev,
+		);
+	}
+	function addSeed() {
+		if (seeds.length >= MAX_SEEDS) return;
+		setFocusIndex(seeds.length);
+		setSeeds((prev) => [...prev, randomSeed()]);
+	}
+	function shuffleAll() {
+		tapSound();
+		setSeeds((prev) => prev.map(() => randomSeed()));
+	}
 
 	const maxRadius = Math.floor(size / 2);
 	const clampedRadius = Math.min(rad, maxRadius);
@@ -326,23 +397,21 @@ export function FigmaPanelDemo() {
 	}, [toast]);
 
 	const showRadius = shape === "rounded" || shape === "squircle";
-	const hero = seeds[0];
-	const heroPx = Math.min(size, MAX_PREVIEW);
 	const outputHint =
 		output === "layers"
 			? "Native shapes, editable."
 			: `A ${pngSize(size)} px PNG, exactly what the web renders.`;
-	const insertLabel = seeds.length > 1 ? `Insert ${seeds.length}` : "Insert";
+	const insertLabel = count > 1 ? `Insert ${count}` : "Insert";
 
 	function onInsert() {
-		if (!seeds.length) {
+		if (!count) {
 			setToast("Add at least one seed");
 			return;
 		}
 		tapSound();
 		setToast(
-			`Inserted ${seeds.length} ${output === "layers" ? "layered" : "image"} avatar${
-				seeds.length > 1 ? "s" : ""
+			`Inserted ${count} ${output === "layers" ? "layered" : "image"} avatar${
+				count > 1 ? "s" : ""
 			}`,
 		);
 	}
@@ -366,85 +435,48 @@ export function FigmaPanelDemo() {
 					ref={cardRef}
 					className="w-[320px] rounded-[20px] bg-white/[0.04]"
 				>
-					{/* Preview stage. */}
-					<div className="flex flex-col gap-4 p-5">
-						<div className="flex items-start justify-between gap-3">
-							<span style={type.caption} className="leading-4">
-								{pattern}
+					{/* Seeds, each a card. The empty card adds one. The outer padding
+					    and the card gap match, so the grid insets evenly. */}
+					<div className="flex flex-col gap-3 p-3">
+						<div className="flex items-center justify-between gap-3 px-1 pt-1.5">
+							<span style={type.label} className="leading-5">
+								Seeds
 							</span>
-							<span
-								style={type.caption}
-								className="max-w-[55%] overflow-hidden text-ellipsis whitespace-nowrap leading-4"
-							>
-								{hero ?? "no seed"}
-							</span>
+							<div className="flex items-center gap-1">
+								<span style={type.value} className="leading-5 tabular-nums">
+									{count}
+								</span>
+								<button
+									type="button"
+									title="Shuffle all seeds"
+									aria-label="Shuffle all seeds"
+									onClick={shuffleAll}
+									className="group -mr-1 shrink-0 cursor-pointer rounded-[7px] p-1.5 transition hover:bg-white/[0.08] motion-safe:active:scale-95"
+								>
+									<span className="block text-white/[0.56] transition-colors group-hover:text-white/[0.88]">
+										<Shuffle size={14} aria-hidden="true" />
+									</span>
+								</button>
+							</div>
 						</div>
-						<div className="grid min-h-[132px] place-items-center">
-							{hero ? (
-								<ShapeAvatar
-									seed={hero}
-									px={heroPx}
+						<div className="grid grid-cols-2 gap-3">
+							{seeds.map((seed, i) => (
+								<SeedCard
+									// biome-ignore lint/suspicious/noArrayIndexKey: seeds are editable and can repeat, so position is the identity.
+									key={i}
+									seed={seed}
+									index={i}
 									pattern={pattern}
 									shape={shape}
 									rad={clampedRadius}
 									size={size}
+									canRemove={seeds.length > 1}
+									onChange={(v) => updateSeed(i, v)}
+									onRemove={() => removeSeed(i)}
+									autoFocus={focusIndex === i}
 								/>
-							) : (
-								<span style={type.value}>Add a seed to preview</span>
-							)}
-						</div>
-						{seeds.length > 1 && (
-							<div className="flex flex-wrap items-center justify-center gap-1.5">
-								{seeds.slice(1, MAX_STRIP + 1).map((seed) => (
-									<ShapeAvatar
-										key={seed}
-										seed={seed}
-										px={STRIP_SIZE}
-										pattern={pattern}
-										shape={shape}
-										rad={clampedRadius}
-										size={size}
-									/>
-								))}
-							</div>
-						)}
-					</div>
-
-					{/* Seeds. */}
-					<div className="flex flex-col gap-3 border-t border-white/[0.06] p-5">
-						<GroupLabel value={seeds.length > 1 ? `${seeds.length}` : undefined}>
-							Seeds
-						</GroupLabel>
-						<div className="flex items-start gap-2">
-							<textarea
-								value={seedsText}
-								onChange={(e) => setSeedsText(e.target.value)}
-								rows={3}
-								spellCheck={false}
-								placeholder="One seed per line"
-								aria-label="Seeds"
-								style={{ fontFamily: font.mono }}
-								className="min-w-0 flex-1 resize-none rounded-[10px] bg-white/[0.06] px-3 py-2 text-[13px] leading-[1.6] text-white/[0.88] placeholder:text-white/[0.28] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/40"
-							/>
-							<button
-								type="button"
-								title="Shuffle seeds"
-								aria-label="Shuffle seeds"
-								onClick={() => {
-									tapSound();
-									setSeedsText(
-										Array.from(
-											{ length: Math.max(1, seeds.length) },
-											randomSeed,
-										).join("\n"),
-									);
-								}}
-								className="group shrink-0 cursor-pointer rounded-[7px] p-2.5 transition hover:bg-white/[0.08] motion-safe:active:scale-95"
-							>
-								<span className="block text-white/[0.56] transition-colors group-hover:text-white/[0.88]">
-									<ShuffleIcon width={15} height={15} aria-hidden="true" />
-								</span>
-							</button>
+							))}
+							{seeds.length < MAX_SEEDS && <AddCard onAdd={addSeed} />}
 						</div>
 					</div>
 
@@ -459,14 +491,13 @@ export function FigmaPanelDemo() {
 						/>
 					</div>
 
-					{/* Size. */}
+					{/* Size. Four presets as pills, a 2x ramp. */}
 					<div className="flex flex-col gap-3 border-t border-white/[0.06] p-5">
 						<GroupLabel value={`${size}px`}>Size</GroupLabel>
-						<Slider
-							value={size}
-							min={16}
-							max={512}
-							onChange={setSize}
+						<Segmented
+							options={SIZE_OPTIONS}
+							value={String(size)}
+							onChange={(v) => setSize(Number(v))}
 							label="Size in pixels"
 						/>
 					</div>
@@ -505,26 +536,6 @@ export function FigmaPanelDemo() {
 						<p style={type.value} className="leading-[1.5]">
 							{outputHint}
 						</p>
-					</div>
-
-					{/* Options. */}
-					<div className="flex flex-col gap-4 border-t border-white/[0.06] p-5">
-						<Toggle checked={usePalette} onChange={setUsePalette}>
-							Brand colors
-						</Toggle>
-						<input
-							type="text"
-							value={palette}
-							disabled={!usePalette}
-							onChange={(e) => setPalette(e.target.value)}
-							placeholder="#0F62FE, #FF3D00, #12E29A"
-							aria-label="Brand colors"
-							style={{ fontFamily: font.mono }}
-							className="w-full rounded-[10px] bg-white/[0.06] px-3 py-2 text-[13px] leading-5 text-white/[0.88] transition-opacity placeholder:text-white/[0.28] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/40 disabled:opacity-40"
-						/>
-						<Toggle checked={seedFromName} onChange={setSeedFromName}>
-							Seed from layer name
-						</Toggle>
 					</div>
 
 					{/* Footer actions. */}

@@ -315,8 +315,15 @@ export function transformOps(ops: Op[], scale: number, offset: number): Op[] {
 export interface AvatarSpec {
 	seed: string;
 	pattern: Pattern;
-	/** Frame size in Figma pixels. Drives the geometry and the detail level. */
+	/** Frame size in Figma pixels. Drives the geometry. */
 	size: number;
+	/**
+	 * The level of detail, as an engine display size. It is separate from the
+	 * frame size, so the panel can hold the output at one size and still move
+	 * the detail on its own. Left out, the frame size sets the detail, which is
+	 * the original behaviour.
+	 */
+	displaySize?: number;
 	/** Your own palette instead of the seed's harmony. */
 	colors?: string[];
 	/** Blur radius in pixels. Left out, the engine default applies. */
@@ -345,7 +352,10 @@ export function buildPlan(spec: AvatarSpec): AvatarPlan {
 	const size = Math.max(1, Math.round(spec.size));
 	const blur = Math.max(0, spec.blur ?? defaultBlur(spec.pattern, size));
 	const recorder = new Recorder();
-	const options: DrawOptions = { colors: spec.colors, displaySize: size };
+	const options: DrawOptions = {
+		colors: spec.colors,
+		displaySize: spec.displaySize ?? size,
+	};
 	if (spec.pattern === "dither") {
 		drawDither(recorder, spec.seed, size, options);
 	} else {

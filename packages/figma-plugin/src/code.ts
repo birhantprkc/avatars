@@ -15,8 +15,11 @@ import {
 	row,
 } from "./nodes.ts";
 
-const UI_WIDTH = 352;
-const UI_HEIGHT = 640;
+// The panel is two columns: a fixed 320 px seed grid and a 280 px control
+// column. The height matches the web demo frame: 12 px padding, three card rows
+// of 162 px, and two 12 px gaps, so a full six-card grid shows without a scroll.
+const UI_WIDTH = 600;
+const UI_HEIGHT = 534;
 const SETTINGS_KEY = "settings";
 /** Space between avatars when several are inserted at once. */
 const GAP = 24;

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { FigmaPanelDemo } from "@/components/FigmaPanelDemo";
+import { FigmaPanelSplitPage } from "@/components/figma-panel/layouts";
 
 export const metadata: Metadata = {
 	title: "Figma panel",
@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function FigmaPanelPage() {
-	return <FigmaPanelDemo />;
+	return <FigmaPanelSplitPage />;
 }

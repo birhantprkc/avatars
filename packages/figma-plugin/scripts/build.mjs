@@ -15,8 +15,34 @@ import { fileURLToPath } from "node:url";
 import * as esbuild from "esbuild";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const repoRoot = path.resolve(root, "../..");
 const out = path.join(root, "dist");
 const watch = process.argv.includes("--watch");
+
+/**
+ * The two brand fonts, inlined as base64 so the panel needs no network. Inter
+ * is the sans face and Geist Mono is the value face, the same two the web site
+ * self-hosts. Both are variable, so one file covers every weight the panel
+ * asks for. The plugin manifest says `networkAccess: none`, so an inlined font
+ * is the only way the panel can wear the real type.
+ */
+const FONT_FILES = {
+	InterVar: path.join(repoRoot, "src/app/fonts/InterVariable.woff2"),
+	GeistMono: path.join(
+		repoRoot,
+		"node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2",
+	),
+};
+
+async function fontFaces() {
+	const faces = await Promise.all(
+		Object.entries(FONT_FILES).map(async ([family, file]) => {
+			const data = (await readFile(file)).toString("base64");
+			return `@font-face{font-family:'${family}';font-style:normal;font-weight:100 900;font-display:block;src:url(data:font/woff2;base64,${data}) format('woff2')}`;
+		}),
+	);
+	return faces.join("\n");
+}
 
 const shared = {
 	bundle: true,
@@ -42,10 +68,10 @@ const inlineHtml = {
 			// A closing tag inside the bundle would end the script early.
 			const script = file.text.replace(/<\/script/gi, "<\\/script");
 			await mkdir(out, { recursive: true });
-			await writeFile(
-				path.join(out, "ui.html"),
-				template.replace("<!-- bundle -->", `<script>${script}</script>`),
-			);
+			const html = template
+				.replace("/* FONTS */", await fontFaces())
+				.replace("<!-- bundle -->", `<script>${script}</script>`);
+			await writeFile(path.join(out, "ui.html"), html);
 		});
 	},
 };

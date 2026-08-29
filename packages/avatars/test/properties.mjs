@@ -29,26 +29,28 @@ const check = (name, ok, detail = "") => {
 	if (!ok) failures++;
 };
 
-// Golden palettes, captured from v0.2.1. Changing any of these re-rolls
-// avatars in the wild: bump intentionally, alongside a major version.
+// Golden palettes, re-captured at v0.6.0 when the base hue moved to
+// golden-ratio hashing (the old `(seed * 137.5) % 360` gave only 144 hues,
+// so distinct string seeds collided). Changing any of these re-rolls avatars
+// in the wild: bump intentionally, alongside a major (or pre-1.0 minor).
 const GOLDEN = [
 	{
 		input: "jane@example.com",
 		seed: 2231369329,
 		harmony: "triadic",
-		colors: ["#8659F2", "#FB692C", "#58FD88"],
+		colors: ["#BD59F2", "#FBB42C", "#58FDC4"],
 	},
 	{
 		input: "acme",
 		seed: 2281398667,
 		harmony: "complementary",
-		colors: ["#40F8A4", "#EA1979", "#0FF2D6", "#EC4258"],
+		colors: ["#F8A940", "#1973EA", "#F2DC0F", "#4253EC"],
 	},
 	{
 		input: 42,
 		seed: 42,
 		harmony: "tetradic",
-		colors: ["#F38763", "#52F51C", "#29BFF2", "#D160F7"],
+		colors: ["#F36388", "#C0F51C", "#29F2BE", "#8560F7"],
 	},
 	{
 		input: 0,
@@ -60,13 +62,13 @@ const GOLDEN = [
 		input: "outpace",
 		seed: 1754654890,
 		harmony: "tetradic",
-		colors: ["#FEEB21", "#09F96D", "#2C3DF9", "#E72C99"],
+		colors: ["#21C1FE", "#C409F9", "#F9652C", "#56E72C"],
 	},
 	{
 		input: "0",
 		seed: 1684187033,
 		harmony: "complementary",
-		colors: ["#252DF4", "#EFE962", "#7B4EE9", "#A9E121"],
+		colors: ["#D225F4", "#7AEF62", "#E94ECF", "#21E141"],
 	},
 ];
 

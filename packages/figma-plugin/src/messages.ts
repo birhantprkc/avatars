@@ -46,15 +46,15 @@ export interface Selected {
 
 /** Everything the panel remembers between runs. */
 export interface Settings {
-	seeds: string;
+	/** The seed of each card, in order. One card, one avatar. */
+	seeds: string[];
 	pattern: Pattern;
 	shape: Shape;
-	size: number;
+	/** The level of detail, 0 to 100. It maps to an engine display size. */
+	detail: number;
+	/** Corner radius as a percent of the side, 0 to 50. Used by `rounded`. */
 	radius: number;
-	smoothing: number;
 	output: Output;
-	palette: string;
-	usePalette: boolean;
 }
 
 export type UiMessage =

@@ -27,7 +27,11 @@ const HARMONY_TYPES: Harmony[] = [
 	"complementary",
 ];
 
-const GOLDEN_ANGLE = 137.5;
+// Golden-ratio conjugate, for golden-ratio hashing of the base hue. The
+// fraction of `s * this` is evenly spread across 0..1, so sequential seeds
+// fan out and hashed seeds keep full resolution. The old `(s * 137.5) % 360`
+// gave only 144 distinct hues, so different string seeds collided often.
+const GOLDEN_RATIO_CONJUGATE = 0.618033988749895;
 
 function seededRandom(seed: number): () => number {
 	let s = seed;
@@ -191,7 +195,7 @@ export function generatePalette(
 ): GradientPalette {
 	const s = toSeed(seed);
 	const random = seededRandom(s);
-	const baseHue = (s * GOLDEN_ANGLE) % 360;
+	const baseHue = ((s * GOLDEN_RATIO_CONJUGATE) % 1) * 360;
 	// Consume the harmony roll even when overridden so the per-color rolls
 	// below stay identical, overriding with the seed's natural harmony must
 	// produce exactly the default palette.
