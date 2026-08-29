@@ -17,6 +17,12 @@ export function Avatar({ user }) {
 <GradientAvatar seed="studio" size={84} radius={18} /> // rounded square
 <GradientAvatar seed="studio" size={84} radius={0} />  // square`,
 	},
+	density: {
+		lang: "tsx",
+		code: `// Same seed. The size decides how much detail fits.
+<GradientAvatar seed="studio" size={24} />  // 2 colors, a few big shapes
+<GradientAvatar seed="studio" size={160} /> // the full palette and detail`,
+	},
 	patterns: {
 		lang: "tsx",
 		code: `<GradientAvatar seed="studio" size={84} />                  // mesh (default)

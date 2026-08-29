@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Avatars</title>
+		<style>
+			/* FONTS */
+
+			/*
+			 * The panel wears the same clothes as avatars.outpacestudios.com and
+			 * the site's home grid: black, thin white hairlines, seed cards on the
+			 * left, controls on the right, one accent of full white on the primary
+			 * action. The two brand fonts inline above: Inter for the sans face,
+			 * Geist Mono for the seed captions and the value readouts.
+			 */
+			:root {
+				--ink: rgba(255, 255, 255, 0.92);
+				--ink-input: rgba(255, 255, 255, 0.88);
+				--body: rgba(255, 255, 255, 0.62);
+				--muted: rgba(255, 255, 255, 0.42);
+				--idle: rgba(255, 255, 255, 0.48);
+				--idle-hover: rgba(255, 255, 255, 0.8);
+				--faint: rgba(255, 255, 255, 0.28);
+				--line: rgba(255, 255, 255, 0.06);
+				--raise: rgba(255, 255, 255, 0.04);
+				--raise-hover: rgba(255, 255, 255, 0.06);
+				--pill: rgba(255, 255, 255, 0.06);
+				--pill-on: rgba(255, 255, 255, 0.14);
+				--spring: cubic-bezier(0.5, 1.25, 0.5, 1);
+				/* The site's one entrance curve, tokens.motion.easeOut. */
+				--ease: cubic-bezier(0.22, 1, 0.36, 1);
+				--font-sans: "InterVar", ui-sans-serif, system-ui, -apple-system,
+					"Segoe UI", sans-serif;
+				--font-mono: "GeistMono", ui-monospace, "SF Mono", SFMono-Regular,
+					Menlo, Consolas, monospace;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			html,
+			body {
+				height: 100%;
+			}
+
+			body {
+				margin: 0;
+				background: #000;
+				color: var(--ink);
+				font-family: var(--font-sans);
+				font-size: 13px;
+				line-height: 1.4;
+				-webkit-font-smoothing: antialiased;
+				text-rendering: optimizeLegibility;
+			}
+
+			/* The whole panel is one faint raised surface over black, the same
+			   bg-white/[0.04] the demo frame wears. The seed cards then layer
+			   their own 0.04 on top of it, so a card reads a touch lighter than
+			   the panel, exactly as it does on the web. */
+			.panel {
+				display: flex;
+				height: 100%;
+				background: var(--raise);
+			}
+
+			/* ── left: the seed grid ── */
+
+			/* The seed column fades to nothing at the top and bottom edges, so a
+			   row that scrolls past the frame melts away rather than being cut on
+			   a hard line. The mask stays fixed to the viewport as the cards move
+			   under it. */
+			.seeds {
+				width: 320px;
+				flex: none;
+				overflow-y: auto;
+				-webkit-mask-image: linear-gradient(
+					to bottom,
+					transparent 0,
+					#000 20px,
+					#000 calc(100% - 20px),
+					transparent 100%
+				);
+				mask-image: linear-gradient(
+					to bottom,
+					transparent 0,
+					#000 20px,
+					#000 calc(100% - 20px),
+					transparent 100%
+				);
+			}
+
+			.grid {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 12px;
+				padding: 12px;
+				align-content: start;
+			}
+
+			.card {
+				position: relative;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: space-between;
+				aspect-ratio: 7 / 8;
+				padding: 24px 12px 12px;
+				border-radius: 16px;
+				background: var(--raise);
+				cursor: text;
+				transition: background 120ms ease;
+			}
+
+			.card:hover {
+				background: var(--raise-hover);
+			}
+
+			.avatar {
+				width: 84px;
+				height: 84px;
+				overflow: hidden;
+				background: var(--raise);
+				transition: border-radius 0.3s var(--spring);
+			}
+
+			.avatar canvas {
+				display: block;
+				width: 100%;
+				height: 100%;
+			}
+
+			.card input {
+				width: 100%;
+				min-width: 0;
+				padding: 6px;
+				border: 0;
+				border-radius: 8px;
+				background: transparent;
+				color: var(--body);
+				text-align: center;
+				font-family: var(--font-mono);
+				font-size: 11px;
+				line-height: 16px;
+				transition: color 120ms ease;
+			}
+
+			.card input:focus {
+				outline: none;
+				color: var(--ink-input);
+			}
+
+			.card input::placeholder {
+				color: var(--faint);
+			}
+
+			.remove {
+				position: absolute;
+				top: 6px;
+				right: 6px;
+				z-index: 1;
+				display: grid;
+				place-items: center;
+				width: 24px;
+				height: 24px;
+				padding: 0;
+				border: 0;
+				border-radius: 999px;
+				background: transparent;
+				color: rgba(255, 255, 255, 0.4);
+				cursor: pointer;
+				opacity: 0;
+				transition: background 120ms ease, color 120ms ease, opacity 120ms ease;
+			}
+
+			.card:hover .remove,
+			.remove:focus-visible {
+				opacity: 1;
+			}
+
+			.remove:hover {
+				background: rgba(255, 255, 255, 0.1);
+				color: var(--ink-input);
+			}
+
+			.add {
+				display: grid;
+				place-items: center;
+				aspect-ratio: 7 / 8;
+				border: 0;
+				border-radius: 16px;
+				background: rgba(255, 255, 255, 0.02);
+				color: rgba(255, 255, 255, 0.4);
+				cursor: pointer;
+				transition: background 120ms ease, color 120ms ease, transform 120ms ease;
+			}
+
+			.add:hover {
+				background: rgba(255, 255, 255, 0.05);
+				color: var(--ink-input);
+			}
+
+			.add:active {
+				transform: scale(0.99);
+			}
+
+			/* ── right: the controls ── */
+
+			.controls-col {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				min-width: 0;
+				border-left: 1px solid var(--line);
+			}
+
+			.controls {
+				flex: 1;
+				overflow-y: auto;
+			}
+
+			.group {
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+				padding: 16px 12px;
+				border-top: 1px solid var(--line);
+			}
+
+			/* The demo wraps the stack in 12 px of padding and zeroes the first
+			   group's top, so the first label stands 12 px below the top edge,
+			   not the group's own 16 px. */
+			.group:first-child {
+				border-top: 0;
+				padding-top: 12px;
+			}
+
+			.label {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 12px;
+				color: var(--ink);
+				font-size: 13px;
+				font-weight: 450;
+				line-height: 20px;
+			}
+
+			.label .val {
+				color: var(--muted);
+				font-family: var(--font-mono);
+				font-size: 12px;
+				font-weight: 400;
+				line-height: 20px;
+				font-variant-numeric: tabular-nums;
+				white-space: nowrap;
+			}
+
+			/* ── segmented control, with a sliding pill ── */
+
+			.seg {
+				position: relative;
+				display: flex;
+				min-width: 0;
+				padding: 4px;
+				border-radius: 999px;
+				background: var(--pill);
+			}
+
+			.seg .pill {
+				position: absolute;
+				top: 4px;
+				left: 0;
+				height: calc(100% - 8px);
+				border-radius: 999px;
+				background: var(--pill-on);
+				transition: transform 0.3s var(--spring), width 0.3s var(--spring);
+				pointer-events: none;
+			}
+
+			.seg button {
+				position: relative;
+				z-index: 1;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 6px;
+				flex: 1 1 0;
+				min-width: 0;
+				padding: 6px 10px;
+				border: 0;
+				border-radius: 999px;
+				background: none;
+				color: var(--idle);
+				font: inherit;
+				font-size: 13px;
+				font-weight: 550;
+				line-height: 20px;
+				cursor: pointer;
+				transition: color 120ms ease;
+			}
+
+			/* The pattern glyph draws in the button's own color, so it dims and
+			   brightens with the label as the selection moves. */
+			.seg-icon {
+				display: inline-flex;
+				flex: none;
+			}
+
+			.seg button:hover {
+				color: var(--idle-hover);
+			}
+
+			.seg button[aria-pressed="true"] {
+				color: var(--ink);
+			}
+
+			/* ── slider ── */
+
+			.fp-range {
+				-webkit-appearance: none;
+				appearance: none;
+				width: 100%;
+				height: 4px;
+				border-radius: 99px;
+				background: rgba(255, 255, 255, 0.12);
+				outline: none;
+				cursor: pointer;
+			}
+
+			.fp-range::-webkit-slider-thumb {
+				-webkit-appearance: none;
+				appearance: none;
+				width: 16px;
+				height: 16px;
+				border-radius: 99px;
+				background: #fff;
+				box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+				cursor: grab;
+			}
+
+			.fp-range::-webkit-slider-thumb:active {
+				cursor: grabbing;
+			}
+
+			.fp-range:focus-visible {
+				outline: 2px solid rgba(255, 255, 255, 0.4);
+				outline-offset: 4px;
+			}
+
+			.hidden {
+				display: none;
+			}
+
+			/* The radius slider grows open under Rounded and folds away again.
+			   The grid-row trick animates from a real height to zero, so it needs
+			   no fixed pixel height. The negative margin cancels the group gap
+			   while it is closed, so no empty band remains. */
+			.reveal {
+				display: grid;
+				grid-template-rows: 0fr;
+				opacity: 0;
+				margin-top: -12px;
+				transition: grid-template-rows 0.28s var(--ease),
+					opacity 0.28s var(--ease), margin-top 0.28s var(--ease);
+			}
+
+			.reveal.open {
+				grid-template-rows: 1fr;
+				opacity: 1;
+				margin-top: -4px;
+			}
+
+			/* The inner box must clip for the height animation to work. So it also
+			   clips the slider thumb unless it holds enough room. The thumb is
+			   16 px on a 4 px track, so it reaches 6 px past the track each way.
+			   8 px of padding gives it room with a little to spare. */
+			.reveal-inner {
+				overflow: hidden;
+				min-height: 0;
+				padding: 8px 0;
+			}
+
+			/* A new seed card pops in, the same spring the web demo uses. */
+			@keyframes pop {
+				from {
+					opacity: 0;
+					transform: scale(0.8);
+				}
+				to {
+					opacity: 1;
+					transform: scale(1);
+				}
+			}
+
+			.pop {
+				animation: pop 0.32s var(--spring);
+			}
+
+			/* A removed card plays the same spring in reverse: it shrinks and
+			   fades before it leaves the grid. `forwards` holds the small, clear
+			   end state, so the card does not flash back to full first. */
+			.pop-out {
+				animation: pop 0.32s var(--spring) reverse forwards;
+			}
+
+			/* ── footer ── */
+
+			footer {
+				flex: none;
+				display: flex;
+				gap: 8px;
+				padding: 12px;
+				border-top: 1px solid var(--line);
+			}
+
+			.action {
+				flex: 1;
+				padding: 10px 16px;
+				border: 0;
+				border-radius: 999px;
+				font: inherit;
+				font-size: 13px;
+				font-weight: 550;
+				line-height: 20px;
+				cursor: pointer;
+				transition: background 120ms ease, opacity 120ms ease, transform 120ms ease;
+			}
+
+			.action:active:not(:disabled) {
+				transform: scale(0.99);
+			}
+
+			.primary {
+				background: #fff;
+				color: #000;
+			}
+
+			.primary:hover:not(:disabled) {
+				background: rgba(255, 255, 255, 0.88);
+			}
+
+			/* The secondary action is a real filled button while it can act. It
+			   reads as a solid gray pill with bright text, not a faint outline.
+			   When it is disabled the base fill and the 0.5 opacity below dim it. */
+			.secondary {
+				background: var(--pill);
+				color: var(--body);
+			}
+
+			.secondary:not(:disabled) {
+				background: rgba(255, 255, 255, 0.12);
+				color: var(--ink-input);
+			}
+
+			.secondary:hover:not(:disabled) {
+				background: rgba(255, 255, 255, 0.16);
+			}
+
+			.action:disabled {
+				opacity: 0.5;
+				cursor: default;
+			}
+
+			@media (prefers-reduced-motion: reduce) {
+				* {
+					transition: none !important;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<main class="panel">
+			<section class="seeds">
+				<div class="grid" id="grid"></div>
+			</section>
+
+			<section class="controls-col">
+				<div class="controls">
+					<div class="group">
+						<span class="label">Pattern</span>
+						<div class="seg" id="pattern"></div>
+					</div>
+
+					<div class="group">
+						<span class="label">Detail<span class="val" id="detail-value"></span></span>
+						<input type="range" class="fp-range" id="detail" />
+					</div>
+
+					<div class="group">
+						<span class="label">Shape<span class="val" id="radius-value"></span></span>
+						<div class="seg" id="shape"></div>
+						<div class="reveal" id="radius-reveal">
+							<div class="reveal-inner">
+								<input type="range" class="fp-range" id="radius" />
+							</div>
+						</div>
+					</div>
+
+					<div class="group">
+						<span class="label">Output</span>
+						<div class="seg" id="output"></div>
+					</div>
+				</div>
+
+				<footer>
+					<button type="button" class="action primary" id="insert">Insert</button>
+					<button type="button" class="action secondary" id="fill" disabled>
+						Fill selection
+					</button>
+				</footer>
+			</section>
+		</main>
+		<!-- bundle -->
+	</body>
+</html>

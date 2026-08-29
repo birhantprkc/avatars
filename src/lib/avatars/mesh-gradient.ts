@@ -27,7 +27,11 @@ const HARMONY_TYPES: Harmony[] = [
 	"complementary",
 ];
 
-const GOLDEN_ANGLE = 137.5;
+// Golden-ratio conjugate, for golden-ratio hashing of the base hue. The
+// fraction of `s * this` is evenly spread across 0..1, so sequential seeds
+// fan out and hashed seeds keep full resolution. The old `(s * 137.5) % 360`
+// gave only 144 distinct hues, so different string seeds collided often.
+const GOLDEN_RATIO_CONJUGATE = 0.618033988749895;
 
 function seededRandom(seed: number): () => number {
 	let s = seed;
@@ -150,12 +154,8 @@ export interface MeshOptions {
 
 /** At or below this display size (CSS px), draw the simplest version. */
 const DETAIL_MIN_SIZE = 16;
-/**
- * At or above this display size (CSS px), draw the full complexity. Exported
- * because the demo surfaces pin it: a page of avatars at mixed sizes has to
- * read at one density, so only /create shows the ramp.
- */
-export const DETAIL_FULL_SIZE = 160;
+/** At or above this display size (CSS px), draw the full complexity. */
+const DETAIL_FULL_SIZE = 160;
 /** Colors a simplified avatar keeps, the start of the seed's palette. */
 const MIN_COLORS = 2;
 /** Mesh spots a simplified avatar keeps, the largest ones. */
@@ -195,7 +195,7 @@ export function generatePalette(
 ): GradientPalette {
 	const s = toSeed(seed);
 	const random = seededRandom(s);
-	const baseHue = (s * GOLDEN_ANGLE) % 360;
+	const baseHue = ((s * GOLDEN_RATIO_CONJUGATE) % 1) * 360;
 	// Consume the harmony roll even when overridden so the per-color rolls
 	// below stay identical, overriding with the seed's natural harmony must
 	// produce exactly the default palette.

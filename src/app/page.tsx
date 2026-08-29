@@ -13,11 +13,7 @@ import { CopyMorphIcon } from "@/components/PackageSwitcher";
 import { PatternSwitch } from "@/components/PatternSwitch";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Toast } from "@/components/Toast";
-import {
-	DEMO_DENSITY,
-	drawPattern,
-	type Pattern,
-} from "@/lib/avatars/patterns";
+import { drawPattern, type Pattern } from "@/lib/avatars/patterns";
 import { FAQ } from "@/lib/seo";
 import { usePrefersReducedMotion } from "@/lib/utils/useReducedMotion";
 import { useSmoothCorners } from "@/lib/utils/useSmoothCorners";
@@ -481,13 +477,7 @@ function GradientCard({
 				<div className="size-[80px] md:size-[96px] transition-transform duration-150 motion-safe:group-hover:scale-105">
 					{/* fill: the responsive wrapper owns the dimensions; a fixed
 					    96px avatar overflowed the 80px mobile box 8px off-center. */}
-					<GradientAvatar
-						seed={seed}
-						size={96}
-						displaySize={DEMO_DENSITY}
-						fill
-						pattern={pattern}
-					/>
+					<GradientAvatar seed={seed} size={96} fill pattern={pattern} />
 				</div>
 			</button>
 
@@ -499,7 +489,7 @@ function GradientCard({
 				{seed}
 			</span>
 
-			<div className="absolute inset-x-3 bottom-3 md:inset-x-4 md:bottom-4 flex items-center justify-end gap-1 opacity-0 translate-y-1 transition-all duration-150 group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:translate-y-0">
+			<div className="absolute inset-x-2 bottom-2 flex items-center justify-end gap-1 opacity-0 translate-y-1 transition-all duration-150 group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:translate-y-0">
 				{canCopy && (
 					<IconButton
 						onClick={(e) => {
@@ -663,12 +653,7 @@ export default function Home() {
 										: { duration: 8, repeat: Infinity, ease: "easeInOut" }
 								}
 							>
-								<GradientAvatar
-									seed={heroSeed}
-									size={160}
-									displaySize={DEMO_DENSITY}
-									pattern={pattern}
-								/>
+								<GradientAvatar seed={heroSeed} size={160} pattern={pattern} />
 							</motion.div>
 
 							<div className="flex flex-col items-center gap-4 w-full max-w-[260px]">
