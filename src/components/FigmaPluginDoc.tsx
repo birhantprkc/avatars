@@ -21,19 +21,21 @@ const MUTED = "rgba(255,255,255,0.42)";
 const MONO =
 	"var(--font-geist-mono), ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace";
 
-/** The download the site serves. `pnpm --filter ...-figma pack` rebuilds it. */
-const ZIP_HREF = "/avatars-figma-plugin.zip";
 const REPO_HREF =
 	"https://github.com/outpacelabs/avatars/tree/main/packages/figma-plugin";
 /** The Figma Community listing for the plugin. */
 const FIGMA_PLUGIN_HREF =
 	"https://www.figma.com/community/plugin/1675274747793532564/avatars-by-outpace-studios";
 
-function Col({ children }: { children: ReactNode }) {
+function Col({ children, center }: { children: ReactNode; center?: boolean }) {
 	const reduced = useReducedMotion() ?? false;
 	return (
 		<motion.div
-			style={{ maxWidth: 640, margin: "0 auto" }}
+			style={{
+				maxWidth: 640,
+				margin: "0 auto",
+				textAlign: center ? "center" : undefined,
+			}}
 			initial={reduced ? false : { opacity: 0, y: 12 }}
 			whileInView={{ opacity: 1, y: 0 }}
 			viewport={{ once: true, margin: "0px 0px -64px 0px" }}
@@ -133,55 +135,6 @@ function A({ href, children }: { href: string; children: ReactNode }) {
 	);
 }
 
-/** A numbered step list, one clean row per step. */
-function Steps({ items }: { items: ReactNode[] }) {
-	const ref = useSmoothCorners<HTMLOListElement>(16);
-	return (
-		<ol
-			ref={ref}
-			style={{
-				margin: "22px 0 0",
-				borderRadius: 16,
-				overflow: "hidden",
-				background: "rgba(255,255,255,0.04)",
-				listStyle: "none",
-				padding: 0,
-				counterReset: "step",
-			}}
-		>
-			{items.map((item, i) => (
-				<li
-					// biome-ignore lint/suspicious/noArrayIndexKey: fixed ordered list
-					key={i}
-					style={{
-						display: "flex",
-						gap: 14,
-						alignItems: "baseline",
-						padding: "14px 16px",
-						borderTop: i === 0 ? undefined : "1px solid rgba(255,255,255,0.06)",
-					}}
-				>
-					<span
-						aria-hidden
-						style={{
-							fontFamily: MONO,
-							fontSize: 12,
-							color: MUTED,
-							flex: "none",
-							width: 16,
-						}}
-					>
-						{i + 1}
-					</span>
-					<span style={{ fontSize: 14, lineHeight: 1.6, color: BODY }}>
-						{item}
-					</span>
-				</li>
-			))}
-		</ol>
-	);
-}
-
 /** The control reference: one row per control group. */
 const CONTROLS: { name: string; desc: ReactNode }[] = [
 	{
@@ -248,9 +201,9 @@ export function FigmaPluginDoc() {
 						style={{ maxWidth: 1080, margin: "0 auto", width: "100%" }}
 					>
 						<main>
-							{/* Hero: title, one line, the primary download, the live panel. */}
+							{/* Hero: title, one line, the Figma call to action, the live panel. */}
 							<section>
-								<Col>
+								<Col center>
 									<h1
 										style={{
 											fontSize: 28,
@@ -273,6 +226,7 @@ export function FigmaPluginDoc() {
 											display: "flex",
 											flexWrap: "wrap",
 											alignItems: "center",
+											justifyContent: "center",
 											gap: 12,
 											margin: "26px 0 0",
 										}}
@@ -281,30 +235,11 @@ export function FigmaPluginDoc() {
 											href={FIGMA_PLUGIN_HREF}
 											target="_blank"
 											rel="noopener noreferrer"
-											className="inline-flex h-11 items-center gap-2.5 rounded-full bg-white pl-5 pr-5 text-sm font-[550] leading-none text-black transition hover:bg-white/90 motion-safe:active:scale-[0.98]"
+											className="inline-flex h-11 items-center rounded-full bg-white pl-5 pr-5 text-sm font-[550] leading-none text-black transition hover:bg-white/90 motion-safe:active:scale-[0.98]"
 										>
-											<FigmaGlyph />
-											Open in Figma
-										</a>
-										<a
-											href={ZIP_HREF}
-											download
-											className="inline-flex h-11 items-center gap-2.5 rounded-full bg-white/[0.08] pl-5 pr-5 text-sm font-[550] leading-none text-white/[0.96] transition hover:bg-white/[0.12] motion-safe:active:scale-[0.98]"
-										>
-											<DownloadGlyph />
-											Download the plugin
+											Get the plugin
 										</a>
 									</div>
-									<p
-										style={{
-											fontSize: 12,
-											color: MUTED,
-											margin: "12px 0 0",
-										}}
-									>
-										Free on the Figma Community. The zip is the same plugin for
-										the desktop app, with no account and no network.
-									</p>
 								</Col>
 
 								{/* The real editor the plugin ships. Overflows to scroll on a
@@ -331,38 +266,10 @@ export function FigmaPluginDoc() {
 									<H2>Install</H2>
 									<P>
 										The plugin is on the Figma Community.{" "}
-										<A href={FIGMA_PLUGIN_HREF}>Open the listing</A> and run it in
-										any file. This is the easy path. It works in the browser and
-										in the desktop app, with no manual step.
+										<A href={FIGMA_PLUGIN_HREF}>Open the listing</A> and run it
+										in any file. It works in the browser and in the desktop app,
+										with no manual step.
 									</P>
-									<P>
-										You can also run the offline build from the manifest. This
-										path needs the Figma desktop app, because the browser version
-										cannot import a manifest.
-									</P>
-									<Steps
-										items={[
-											<>
-												<A href={ZIP_HREF}>Download the zip</A> and unzip it.
-												Keep the folder somewhere it can stay, because Figma
-												reads the files from disk each time it runs.
-											</>,
-											<>Open the Figma desktop app and open any file.</>,
-											<>
-												In the menu, go to <C>Plugins</C> &rarr;{" "}
-												<C>Development</C> &rarr;{" "}
-												<C>Import plugin from manifest…</C>
-											</>,
-											<>
-												Choose the <C>manifest.json</C> in the folder you
-												unzipped.
-											</>,
-											<>
-												Run it from <C>Plugins</C> &rarr; <C>Development</C>{" "}
-												&rarr; <C>Avatars</C>.
-											</>,
-										]}
-									/>
 								</Col>
 							</section>
 
@@ -502,46 +409,5 @@ export function FigmaPluginDoc() {
 
 			<SiteFooter />
 		</div>
-	);
-}
-
-function DownloadGlyph() {
-	return (
-		<svg
-			aria-hidden="true"
-			width="15"
-			height="15"
-			viewBox="0 0 16 16"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-		>
-			<path
-				d="M13.5 9.83333V13.5H2.5V9.83333M7.99999 2.5L8 9.33333M5.66667 7.66667L7.99999 10L10.3333 7.66667"
-				stroke="currentColor"
-				strokeWidth="1.4"
-				strokeLinecap="square"
-			/>
-		</svg>
-	);
-}
-
-// The Figma logo, monochrome so it inherits the button text color. Aspect is
-// 2:3, so the width is smaller than the height to keep the mark upright.
-function FigmaGlyph() {
-	return (
-		<svg
-			aria-hidden="true"
-			width="10"
-			height="15"
-			viewBox="0 0 38 57"
-			fill="currentColor"
-			xmlns="http://www.w3.org/2000/svg"
-		>
-			<path d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z" />
-			<path d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z" />
-			<path d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z" />
-			<path d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z" />
-			<path d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z" />
-		</svg>
 	);
 }

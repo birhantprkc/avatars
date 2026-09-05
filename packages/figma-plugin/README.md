@@ -19,14 +19,8 @@ This works in the browser and in the desktop app.
 
 - Community: <https://www.figma.com/community/plugin/1675274747793532564/avatars-by-outpace-studios>
 
-You can also run the offline build from the manifest, in the desktop app only.
-
-1. Get the zip from <https://avatars.outpacestudios.com/figma-plugin>.
-2. Unzip it, and keep the folder on disk.
-3. In the Figma desktop app: **Plugins → Development → Import plugin from
-   manifest**, and choose the `manifest.json` in that folder.
-
-The full user guide is on that page.
+The full user guide is on that page. To build and run it from source, see
+[Develop](#develop) below.
 
 ## What it does
 
