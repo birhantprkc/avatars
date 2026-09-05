@@ -1,7 +1,6 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import Link from "next/link";
 import { type ReactNode, useEffect, useState } from "react";
 import { ControlsStack, SplitEditor } from "@/components/figma-panel/layouts";
 import { RangeStyle } from "@/components/figma-panel/shared";
@@ -26,6 +25,9 @@ const MONO =
 const ZIP_HREF = "/avatars-figma-plugin.zip";
 const REPO_HREF =
 	"https://github.com/outpacelabs/avatars/tree/main/packages/figma-plugin";
+/** The Figma Community listing for the plugin. */
+const FIGMA_PLUGIN_HREF =
+	"https://www.figma.com/community/plugin/1675274747793532564/avatars-by-outpace-studios";
 
 function Col({ children }: { children: ReactNode }) {
 	const reduced = useReducedMotion() ?? false;
@@ -276,19 +278,22 @@ export function FigmaPluginDoc() {
 										}}
 									>
 										<a
+											href={FIGMA_PLUGIN_HREF}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="inline-flex h-11 items-center gap-2.5 rounded-full bg-white pl-5 pr-5 text-sm font-[550] leading-none text-black transition hover:bg-white/90 motion-safe:active:scale-[0.98]"
+										>
+											<FigmaGlyph />
+											Open in Figma
+										</a>
+										<a
 											href={ZIP_HREF}
 											download
-											className="inline-flex h-11 items-center gap-2.5 rounded-full bg-white pl-5 pr-5 text-sm font-[550] leading-none text-black transition hover:bg-white/90 motion-safe:active:scale-[0.98]"
+											className="inline-flex h-11 items-center gap-2.5 rounded-full bg-white/[0.08] pl-5 pr-5 text-sm font-[550] leading-none text-white/[0.96] transition hover:bg-white/[0.12] motion-safe:active:scale-[0.98]"
 										>
 											<DownloadGlyph />
 											Download the plugin
 										</a>
-										<Link
-											href="/figma-panel"
-											className="inline-flex h-11 items-center rounded-full bg-white/[0.08] px-5 text-sm font-[550] leading-none text-white/[0.96] transition hover:bg-white/[0.12] motion-safe:active:scale-[0.98]"
-										>
-											Open the live demo
-										</Link>
 									</div>
 									<p
 										style={{
@@ -297,7 +302,8 @@ export function FigmaPluginDoc() {
 											margin: "12px 0 0",
 										}}
 									>
-										A zip for the Figma desktop app. No account and no network.
+										Free on the Figma Community. The zip is the same plugin for
+										the desktop app, with no account and no network.
 									</p>
 								</Col>
 
@@ -319,15 +325,20 @@ export function FigmaPluginDoc() {
 								</div>
 							</section>
 
-							{/* Download & install */}
+							{/* Install */}
 							<section>
 								<Col>
-									<H2>Download and install</H2>
+									<H2>Install</H2>
 									<P>
-										The plugin is not on the Figma community yet. You install it
-										from the manifest, which the Figma desktop app does in a few
-										clicks. The browser version cannot import a manifest, so use
-										the desktop app.
+										The plugin is on the Figma Community.{" "}
+										<A href={FIGMA_PLUGIN_HREF}>Open the listing</A> and run it in
+										any file. This is the easy path. It works in the browser and
+										in the desktop app, with no manual step.
+									</P>
+									<P>
+										You can also run the offline build from the manifest. This
+										path needs the Figma desktop app, because the browser version
+										cannot import a manifest.
 									</P>
 									<Steps
 										items={[
@@ -510,6 +521,27 @@ function DownloadGlyph() {
 				strokeWidth="1.4"
 				strokeLinecap="square"
 			/>
+		</svg>
+	);
+}
+
+// The Figma logo, monochrome so it inherits the button text color. Aspect is
+// 2:3, so the width is smaller than the height to keep the mark upright.
+function FigmaGlyph() {
+	return (
+		<svg
+			aria-hidden="true"
+			width="10"
+			height="15"
+			viewBox="0 0 38 57"
+			fill="currentColor"
+			xmlns="http://www.w3.org/2000/svg"
+		>
+			<path d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z" />
+			<path d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z" />
+			<path d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z" />
+			<path d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z" />
+			<path d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z" />
 		</svg>
 	);
 }

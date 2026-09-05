@@ -299,7 +299,7 @@ export function Segmented<T extends string>({
 								onChange(opt.value);
 							}
 						}}
-						className={`relative min-w-0 flex-1 cursor-pointer rounded-full px-2.5 py-1.5 text-[13px] font-[550] leading-5 transition-colors ${
+						className={`relative flex min-w-0 flex-1 cursor-pointer items-center justify-center rounded-full px-2.5 py-1.5 text-[13px] font-[550] leading-5 transition-colors ${
 							active ? "text-white/[0.92]" : "text-white/[0.48] hover:text-white/[0.8]"
 						}`}
 					>
@@ -310,7 +310,7 @@ export function Segmented<T extends string>({
 								className="absolute inset-0 rounded-full bg-white/[0.14]"
 							/>
 						)}
-						<span className="relative z-[1] inline-flex items-center justify-center gap-1.5">
+						<span className="relative z-[1] flex items-center justify-center gap-1.5">
 							{opt.icon}
 							{opt.label}
 						</span>
@@ -482,6 +482,7 @@ const MeshGlyph = (
 		viewBox="0 0 18 18"
 		fill="none"
 		aria-hidden="true"
+		className="shrink-0"
 	>
 		<defs>
 			<linearGradient
