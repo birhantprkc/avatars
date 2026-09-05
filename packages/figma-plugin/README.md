@@ -14,15 +14,19 @@ Output       Layers · Image
 
 ## Install
 
-The plugin is not on the Figma community yet. Download it from the site and
-import it into the Figma desktop app.
+The plugin is on the Figma Community. Open the listing and run it in any file.
+This works in the browser and in the desktop app.
+
+- Community: <https://www.figma.com/community/plugin/1675274747793532564/avatars-by-outpace-studios>
+
+You can also run the offline build from the manifest, in the desktop app only.
 
 1. Get the zip from <https://avatars.outpacestudios.com/figma-plugin>.
 2. Unzip it, and keep the folder on disk.
 3. In the Figma desktop app: **Plugins → Development → Import plugin from
    manifest**, and choose the `manifest.json` in that folder.
 
-Import works in the desktop app only. The full user guide is on that page.
+The full user guide is on that page.
 
 ## What it does
 

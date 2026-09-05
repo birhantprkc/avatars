@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { type ComponentType, useEffect, useRef } from "react";
 import { radius, type } from "@/lib/design/tokens";
 import { useSmoothCorners } from "@/lib/utils/useSmoothCorners";
@@ -138,23 +138,44 @@ function OutputGroup({ p }: ControlsProps) {
 
 /* ── 1. Stack: one column, a divider between each group ── */
 
+// A soft staggered reveal for the control groups. The column is the
+// orchestrator, so each group drops in just after the one above it. The
+// column drives itself on mount, so it plays on the page and in the gallery.
+const groupStagger: Variants = {
+	hidden: {},
+	show: { transition: { delayChildren: 0.25, staggerChildren: 0.07 } },
+};
+const groupItem: Variants = {
+	hidden: { opacity: 0, y: 8 },
+	show: {
+		opacity: 1,
+		y: 0,
+		transition: { type: "spring", stiffness: 260, damping: 24 },
+	},
+};
+
 export function ControlsStack({ p }: ControlsProps) {
 	const row = "flex flex-col gap-3 px-3 py-4 first:pt-0 last:pb-0";
 	return (
-		<div className="-mx-3 flex flex-col divide-y divide-white/[0.06]">
-			<div className={row}>
+		<motion.div
+			variants={groupStagger}
+			initial="hidden"
+			animate="show"
+			className="-mx-3 flex flex-col divide-y divide-white/[0.06]"
+		>
+			<motion.div variants={groupItem} className={row}>
 				<PatternGroup p={p} />
-			</div>
-			<div className={row}>
+			</motion.div>
+			<motion.div variants={groupItem} className={row}>
 				<DetailGroup p={p} />
-			</div>
-			<div className={row}>
+			</motion.div>
+			<motion.div variants={groupItem} className={row}>
 				<ShapeGroup p={p} />
-			</div>
-			<div className={row}>
+			</motion.div>
+			<motion.div variants={groupItem} className={row}>
 				<OutputGroup p={p} />
-			</div>
-		</div>
+			</motion.div>
+		</motion.div>
 	);
 }
 
@@ -221,9 +242,19 @@ const VISIBLE_ROWS = 3; // six seed cards over two columns
 const PANEL_H =
 	GRID_PAD * 2 + VISIBLE_ROWS * CARD_H + (VISIBLE_ROWS - 1) * GRID_GAP;
 
-export function SplitEditor({ Controls }: { Controls: ControlsRenderer }) {
+export function SplitEditor({
+	Controls,
+	embedded = false,
+	intro = false,
+}: {
+	Controls: ControlsRenderer;
+	embedded?: boolean;
+	intro?: boolean;
+}) {
 	const p = usePanelState();
-	const cardRef = useSmoothCorners<HTMLDivElement>(radius.card);
+	// Embedded, the plugin window around it owns the corners. Radius 0 clips
+	// the body to a flat rectangle, so it sits flush under the title bar.
+	const cardRef = useSmoothCorners<HTMLDivElement>(embedded ? 0 : radius.card);
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const prevCount = useRef(p.seeds.length);
 	const mountedRef = useRef(false);
@@ -246,12 +277,21 @@ export function SplitEditor({ Controls }: { Controls: ControlsRenderer }) {
 	return (
 		<div
 			ref={cardRef}
-			className="flex w-[640px] rounded-[20px] bg-white/[0.04]"
+			className={`flex w-[640px] bg-white/[0.04] ${
+				embedded ? "" : "rounded-[20px]"
+			}`}
 			style={{ height: PANEL_H }}
 		>
 			{/* Left: the seed grid. The whole column scrolls once seeds pass six,
-			    so the padding scrolls with the cards and no card is cut. */}
-			<div ref={scrollRef} className="h-full w-[320px] shrink-0 overflow-y-auto">
+			    so the padding scrolls with the cards and no card is cut. On load
+			    it slides in from the left, just after the window settles. */}
+			<motion.div
+				ref={scrollRef}
+				initial={intro ? { opacity: 0, x: -14 } : false}
+				animate={intro ? { opacity: 1, x: 0 } : false}
+				transition={{ type: "spring", stiffness: 200, damping: 24, delay: 0.2 }}
+				className="h-full w-[320px] shrink-0 overflow-y-auto"
+			>
 				<div className="grid auto-rows-min grid-cols-2 gap-3 p-3">
 					<AnimatePresence initial={false} mode="popLayout">
 						{p.seeds.map((seed, i) => (
@@ -295,16 +335,21 @@ export function SplitEditor({ Controls }: { Controls: ControlsRenderer }) {
 						</motion.div>
 					)}
 				</div>
-			</div>
+			</motion.div>
 
 			{/* Right: the controls and the action. */}
 			<div className="flex flex-1 flex-col border-l border-white/[0.06]">
 				<div className="p-3">
 					<Controls p={p} />
 				</div>
-				<div className="mt-auto border-t border-white/[0.06] p-3">
+				<motion.div
+					initial={intro ? { opacity: 0, y: 10 } : false}
+					animate={intro ? { opacity: 1, y: 0 } : false}
+					transition={{ type: "spring", stiffness: 240, damping: 26, delay: 0.5 }}
+					className="mt-auto border-t border-white/[0.06] p-3"
+				>
 					<InsertButtons label={p.insertLabel} onInsert={p.onInsert} />
-				</div>
+				</motion.div>
 			</div>
 
 			<Toast message={p.toast} />
@@ -312,13 +357,72 @@ export function SplitEditor({ Controls }: { Controls: ControlsRenderer }) {
 	);
 }
 
-/* ── the chosen editor, on its own page ── */
+/* ── the plugin window chrome: the Figma title bar on top of the panel ── */
+
+// The close glyph from the Figma design frame (node 1780:2076). It draws in
+// currentColor, so the button can dim it and brighten it on hover.
+function CloseGlyph() {
+	return (
+		<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+			<path
+				d="M16.224 7.082C16.3203 7.01896 16.4353 6.99097 16.5497 7.00274C16.6642 7.0145 16.7711 7.0653 16.8525 7.1466C16.9339 7.22789 16.9849 7.33474 16.9968 7.44917C17.0087 7.56361 16.9809 7.67866 16.918 7.775L16.853 7.853L12.707 12L16.853 16.146L16.918 16.224C16.9828 16.3202 17.0121 16.4359 17.0009 16.5514C16.9898 16.6668 16.9388 16.7748 16.8568 16.8568C16.7748 16.9388 16.6668 16.9898 16.5514 17.0009C16.4359 17.0121 16.3202 16.9828 16.224 16.918L16.146 16.853L12 12.706L7.853 16.853C7.80688 16.9008 7.7517 16.9388 7.6907 16.9651C7.6297 16.9913 7.56409 17.005 7.4977 17.0056C7.43131 17.0062 7.36547 16.9936 7.30402 16.9684C7.24257 16.9433 7.18675 16.9061 7.1398 16.8592C7.09286 16.8123 7.05573 16.7564 7.03059 16.695C7.00545 16.6335 6.9928 16.5677 6.99337 16.5013C6.99395 16.4349 7.00774 16.3693 7.03395 16.3083C7.06015 16.2473 7.09824 16.1921 7.146 16.146L11.293 11.999L7.146 7.853L7.082 7.775C7.01952 7.67874 6.99199 7.56394 7.004 7.44981C7.01601 7.33568 7.06684 7.22913 7.14798 7.14798C7.22913 7.06684 7.33568 7.01601 7.44981 7.004C7.56394 6.99199 7.67874 7.01952 7.775 7.082L7.853 7.146L12 11.293L16.146 7.146L16.224 7.082Z"
+				fill="currentColor"
+			/>
+		</svg>
+	);
+}
+
+// The Figma plugin title bar: the app icon, the plugin name, and a close
+// button. The fill is #2C2C2C, with a 1px #444 line at the bottom edge.
+function PluginTitleBar({ intro = false }: { intro?: boolean }) {
+	return (
+		<motion.div
+			initial={intro ? { opacity: 0, y: -8 } : false}
+			animate={intro ? { opacity: 1, y: 0 } : false}
+			transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.14 }}
+			className="relative flex h-10 items-center bg-[#2C2C2C] shadow-[inset_0_-1px_0_0_#444]"
+		>
+			<div className="flex items-center gap-2 pl-4">
+				{/* eslint-disable-next-line @next/next/no-img-element */}
+				<img
+					src="/figma-plugin-icon.png"
+					alt=""
+					className="size-4 rounded-[4px] object-cover"
+				/>
+				<span className="text-[11px] font-[550] leading-4 tracking-[0.055px] text-white">
+					Avatars
+				</span>
+			</div>
+			<button
+				type="button"
+				aria-label="Close"
+				className="ml-auto flex size-10 items-center justify-center text-white/55 transition-colors hover:text-white"
+			>
+				<CloseGlyph />
+			</button>
+		</motion.div>
+	);
+}
+
+/* ── the chosen editor, on its own page, dressed as a real plugin ── */
 
 export function FigmaPanelSplitPage() {
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-black px-6 py-16">
+		<div className="flex min-h-screen items-center justify-center bg-[#E6E6E6] px-6 py-16">
 			<RangeStyle />
-			<SplitEditor Controls={ControlsStack} />
+			{/* One window: the Figma title bar over the panel body. The window
+			    clips both to the same 13px corner, so it looks like the real
+			    plugin floating on the Figma canvas. On load it rises and scales
+			    up, then hands off to the staggered reveal of its parts. */}
+			<motion.div
+				initial={{ opacity: 0, y: 16, scale: 0.98 }}
+				animate={{ opacity: 1, y: 0, scale: 1 }}
+				transition={{ type: "spring", stiffness: 140, damping: 18, mass: 0.9 }}
+				className="w-[640px] overflow-hidden rounded-[13px] bg-black shadow-[0_16px_50px_rgba(0,0,0,0.28)]"
+			>
+				<PluginTitleBar intro />
+				<SplitEditor Controls={ControlsStack} embedded intro />
+			</motion.div>
 		</div>
 	);
 }

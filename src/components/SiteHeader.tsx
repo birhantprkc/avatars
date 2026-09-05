@@ -53,7 +53,30 @@ const GithubMark = () => (
 	</svg>
 );
 
+// The Figma logo, monochrome so it sits in the same frosted pill as GitHub.
+// Aspect is 2:3, so the width is smaller than the height to keep it upright.
+const FigmaMark = () => (
+	<svg
+		width="10"
+		height="15"
+		viewBox="0 0 38 57"
+		fill="currentColor"
+		aria-hidden="true"
+		className="block shrink-0"
+	>
+		<path d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z" />
+		<path d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z" />
+		<path d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z" />
+		<path d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z" />
+		<path d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z" />
+	</svg>
+);
+
 const GH_REPO = "outpacelabs/avatars";
+
+/** The Figma Community listing for the plugin. */
+const FIGMA_PLUGIN_HREF =
+	"https://www.figma.com/community/plugin/1675274747793532564/avatars-by-outpace-studios";
 
 /** Compact star count, e.g. 1234 → "1.2k", 12300 → "12k". */
 function formatStars(n: number): string {
@@ -263,6 +286,25 @@ export function SiteHeader() {
 			    Glass ships a disabled "Soon" placeholder (their repo isn't
 			    public); ours links to the live public repo. */}
 			<div className="flex items-center gap-2">
+				<a
+					href={FIGMA_PLUGIN_HREF}
+					target="_blank"
+					rel="noopener"
+					aria-label="Open the plugin on the Figma Community"
+					onClick={() => {
+						tapSound();
+						posthog.capture("External Link Clicked", {
+							link_url: FIGMA_PLUGIN_HREF,
+							link_location: "header",
+							link_text: "Figma",
+						});
+					}}
+					className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.08] py-2.5 pl-3 pr-3 sm:pr-3.5 text-sm font-[550] leading-none text-white/[0.96] transition hover:bg-white/[0.12] motion-safe:active:scale-[0.97]"
+				>
+					<FigmaMark />
+					{/* Icon-only below sm, frees room for the wider center nav. */}
+					<span className="hidden sm:inline">Figma</span>
+				</a>
 				<a
 					href="https://github.com/outpacelabs/avatars"
 					target="_blank"
